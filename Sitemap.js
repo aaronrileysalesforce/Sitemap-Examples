@@ -33,29 +33,32 @@ var allowedDomains = [
             {name: "Infobar - Bottom of Page", selector: "footer.site-footer"}
         ],
         onActionEvent: (event) => {
-            if (!event.name) {
-                event.name = Evergage.getState().result.currentPage.name;
-            }
-            //Get Email Address from querystring
-            if (Evergage.util.getParameterByName("subscriberKey") && Evergage.util.getParameterByName("subscriberKey") !== "") {
-                event.user.id = Evergage.util.getParameterByName("subscriberKey");
-                event.user.attributes.emailAddress = Evergage.util.getParameterByName("subscriberKey");
-            }
-            //Get DMP details from local storage
-            if (window.localStorage.kxdmpsaprod_kuid) {
-                event.user.attributes.kuID = window.localStorage.kxdmpsaprod_kuid;
-                if (window.localStorage.kxdmpsaprod_allsegs) {
-                    event.user.attributes.DMPPersona = window.localStorage.kxdmpsaprod_allsegs;
+            if (event.user) {
+                //Get Email Address from querystring
+                if (Evergage.util.getParameterByName("subscriberKey") && Evergage.util.getParameterByName("subscriberKey") !== "") {
+                    var myEmail = Evergage.util.getParameterByName("subscriberKey");
+                    event.user.id = myEmail;
+                    event.user.attributes = {EmailAddress: myEmail};
+                    console.log ("Setting user.id to: " + myEmail);
+                }
+                //Get DMP details from local storage
+                if (window.localStorage.kxdmpsaprod_kuid) {
+                    if (window.localStorage.kxdmpsaprod_allsegs) {
+                        
+                        event.user.attributes = {kuID: window.localStorage.kxdmpsaprod_kuid, DMPPersona: window.localStorage.kxdmpsaprod_allsegs};
+                    } else {
+                        event.user.attributes = {kuID: window.localStorage.kxdmpsaprod_kuid};
+                    }
                 }
             }
-
             return event;
         },
         listeners: [
             Evergage.listener("submit", ".email-signup", () => {
-                var email = Evergage.cashDom("#dwfrm_mcsubscribe_email").val();
-                if (email) {
-                    Evergage.sendEvent({action: "Email Sign Up - Footer", user: {id: email} });
+                var nlEmail = Evergage.cashDom("#dwfrm_mcsubscribe_email").val();
+                if (nlEmail) {
+                     console.log ("Setting user.id to: " + nlEmail);
+                    Evergage.sendEvent({action: "Email Sign Up - Footer", user: {id: nlEmail, email_address:nlEmail, attributes: {EmailAddress: nlEmail}} });
                 }
             }),
         ],
@@ -63,6 +66,7 @@ var allowedDomains = [
     
     config.pageTypes.push({
         name: "Product Page",
+        action: "Viewed Item",
         isMatch: Evergage.resolvers.fromSelector("div.page[data-action='Product-Show']"),
         catalog: {
             Product: {
@@ -113,7 +117,9 @@ var allowedDomains = [
             }
         },
         onActionEvent: (event) => {
-            event.user.attributes ? event.user.attributes.lifeCycleState = "Consideration" : event.user.attributes = { lifeCycleState: "Consideration" };
+            if (event.user){
+                event.user.attributes = { lifeCycleState: "Consideration" };
+            }
             return event;
         },
         contentZones: [
@@ -125,11 +131,18 @@ var allowedDomains = [
                 var lineItem = Evergage.util.buildLineItemFromPageState("select[id*=quantity]");
                 // TODO: add sku handling
                 //lineItem.sku = Evergage.cashDom(".product-detail[data-pid]").attr("data-pid");
+                lineItem._id = Evergage.cashDom(".product-detail[data-pid]").attr("data-pid");
                 Evergage.sendEvent({
+                    action: "Add Item to Cart - " + lineItem._id,
                     itemAction: Evergage.ItemAction.AddToCart,
                     cart: {
                         singleLine: {
                             Product: lineItem
+                        }
+                    },
+                    user: {
+                        attributes: {
+                            lifeCycleState: "Consideration"
                         }
                     }
                 });
@@ -140,8 +153,12 @@ var allowedDomains = [
     
     config.pageTypes.push({
         name: "Category",
+        action: "Viewed Category",
         isMatch: () => {
             return Evergage.cashDom(".page[data-action='Search-Show']").length > 0 && Evergage.cashDom(".breadcrumb").length > 0;
+        },
+        onActionEvent: (event) => {
+            return event;
         },
         catalog: {
             Category: {
@@ -152,6 +169,7 @@ var allowedDomains = [
 
     config.pageTypes.push({
         name: "Cart",
+        action: "Viewed Cart",
         isMatch: () => {
             return /\/cart/.test(window.location.href);
         },
@@ -161,6 +179,7 @@ var allowedDomains = [
                 lineItems: {                    
                     // TODO: add sku handling
                     //sku: Evergage.resolvers.fromSelectorAttributeMultiple(".product-info .product-details .line-item-quanity-info", "data-pid")
+                    _id: Evergage.resolvers.fromSelectorAttributeMultiple(".product-line-item .line-item-quanity-info", "data-pid"),
                     price: Evergage.resolvers.fromSelectorMultiple(".product-info .product-details .pricing"),
                     quantity: Evergage.resolvers.fromSelectorMultiple(".product-info .product-details .qty-card-quantity-count"),
                 }
@@ -170,6 +189,7 @@ var allowedDomains = [
 
     config.pageTypes.push({
         name: "Order Confirmation",
+        action: "Order Confirmation",
         isMatch: () => {
             return /\/confirmation/.test(window.location.href);
         },
@@ -179,6 +199,7 @@ var allowedDomains = [
                 lineItems: {
                     // TODO: add sku handling
                     //sku: Evergage.resolvers.fromSelectorAttributeMultiple(".product-line-item .line-item-quanity-info", "data-pid"),
+                    _id: Evergage.resolvers.fromSelectorAttributeMultiple(".product-line-item .line-item-quanity-info", "data-pid"),
                     price: Evergage.resolvers.fromSelectorMultiple(".product-line-item .pricing"),
                     quantity: Evergage.resolvers.fromSelectorMultiple(".product-line-item .qty-card-quantity-count")   
                 }
@@ -201,7 +222,7 @@ var allowedDomains = [
                         action: "Community Log In", 
                         user: {
                             id: email, 
-                            attributes: {emailAddress: email}
+                            attributes: {EmailAddress: email}
                         },
                         flags: {
                             noCampaigns: true
@@ -224,31 +245,13 @@ var allowedDomains = [
                     Evergage.cashDom("form[name='login-form'] button").on("click", () => {
                         var email = Evergage.cashDom("#login-form-email").val();
                         if (email) {
-                            Evergage.sendEvent({action: "Logged In", user: {id: email} });
+                            Evergage.sendEvent({action: "Logged In", user: {id: email, attributes: {EmailAddress: email}} });
                         }
                     });  
                 }, 500);
             }
             return event;
         },
-        /*
-        listeners: [
-            Evergage.listener("click", "form[name='login-form'] button", () => {
-                var email = Evergage.cashDom("#login-form-email").val();
-                if (email) {
-                    Evergage.sendEvent({
-                        action: "Community Logged In", 
-                        user: {
-                            id: email, 
-                            attributes: {emailAddress: email}
-                        },
-                        flags: {
-                            noCampaigns: true
-                        }
-                    });
-                }
-            }),
-        ]*/
 
     });
 
@@ -282,9 +285,9 @@ var allowedDomains = [
            return event;
         },
         listeners: [
-            Evergage.listener("click", "li.topicItem", () => {
-                var topicLabel = Evergage.cashDom(e.currentTarget).find(".topicLabel").text().trim();
-                //console.log("topic label is =" + topicLabel);
+            Evergage.listener("click", "div.topicContent", () => {
+                var topicLabel = Evergage.cashDom(event.currentTarget).find(".topicLabel").text().trim();
+                console.log("topic label is =" + topicLabel);
                 if (topicLabel) {
                     Evergage.sendEvent({ action: "Community Homepage - " + topicLabel });
                 }
@@ -298,17 +301,21 @@ var allowedDomains = [
         isMatch: function() {
             return /\/instore-experience/.test(window.location.href);
         },
-        onActionEvent: function(event) {
-            if (event.name !== "In Store Experience") {
-                return event;
-            }
-            Evergage.cashDom(".beacon.entrance").on("click", function() {
+        listeners: [
+            Evergage.listener("click", ".beacon.entrance", () => {
                 Evergage.sendEvent({action: "Physical - Store (Entrance)"});
-            });
-            Evergage.cashDom(".beacon.mens").on("click", function() {
+            }),
+            Evergage.listener("click", ".beacon.mens", () => {
                 Evergage.sendEvent({action: "Physical - Store (Camping)"});
-            });
-            Evergage.cashDom(".beacon.register").on("click", function() {
+            }),
+            Evergage.listener("click", ".beacon.shoes", () => {
+                Evergage.sendEvent({action: "Physical - Store (Footwear)"});
+                Evergage.sendEvent({action: "Mobile - iOS (In-Store Push)"});
+            }),
+            Evergage.listener("click", ".iphone-screen.screen-2", () => {
+                Evergage.sendEvent({action: "Mobile - iOS (In-Store Push, App Open)"});
+            }),
+            Evergage.listener("click", ".beacon.register", () => {
                 var order = {
                     orderId: Date.now(),
                     lineItems: [
@@ -322,7 +329,6 @@ var allowedDomains = [
                         }
                     ]
                 };
-                //Evergage.sendEvent({order, itemAction: Evergage.ItemAction.Purchase, attributes: {lifeCycleState: "Purchaser"} });
                 // New ActionEvent
                 Evergage.sendEvent({
                     order,
@@ -331,14 +337,9 @@ var allowedDomains = [
                         attributes: {lifeCycleState: "Purchaser"}  
                     } 
                 });
-            });
-            Evergage.cashDom(".beacon.shoes").on("click", function() { Evergage.sendEvent({action: "Physical - Store (Footwear)"});
-            Evergage.sendEvent({action: "Mobile - iOS (In-Store Push)"});
-            Evergage.cashDom(".iphone-screen.screen-2").on("click", function() {
-                    Evergage.sendEvent({action: "Mobile - iOS (In-Store Push, App Open)"}); 
-                });
-            });
-        }
+            }),
+
+        ]  
     });
     
     
