@@ -92,7 +92,7 @@ var allowedDomains = [
                 rating: () => {
                     return Evergage.util.extractFirstGroup(/([.\w]+) out of/, Evergage.cashDom(".ratings .sr-only").text());
                 },
-                categories: Evergage.resolvers.buildCategoryId(".container .product-breadcrumb .breadcrumb a", null, null, (val) => {
+                Category: Evergage.resolvers.buildCategoryId(".container .product-breadcrumb .breadcrumb a", null, null, (val) => {
                     if (typeof val === "string") {
                         return [val.toUpperCase()];
                     }  
@@ -162,7 +162,11 @@ var allowedDomains = [
         },
         catalog: {
             Category: {
-                _id: Evergage.resolvers.buildCategoryId(".breadcrumb .breadcrumb-item a", 1)
+                _id: Evergage.resolvers.buildCategoryId(".breadcrumb .breadcrumb-item a", 1, null, (val) => {
+                    if (typeof val === "string") {
+                        return [val.toUpperCase()];
+                    }  
+                }),
             }
         }
     });
