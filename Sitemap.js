@@ -238,12 +238,38 @@ var allowedDomains = [
     
     config.pageTypes.push({
         name: "Community Stories",
-        action: "Community Blog Post",
+        action: "Viewed Stories",
         isMatch: () => {
-            return /\/s\/stories/.test(window.location.href) || /\/s\/ntoblog/.test(window.location.href);
+            return  /\/s\/stories/.test(window.location.href);
         }
     });
     
+    config.pageTypes.push({
+        name: "Community Blog Post",
+        action: "Viewed Blog Post",
+        isMatch: () => {
+            return /\/s\/ntoblog/.test(window.location.href);
+        },
+        catalog: {
+            Blog: {
+                _id: Evergage.resolvers.fromSelector("#NTO-page > div.body > div > div > div:nth-child(2) > div > div.cb-section_row.slds-grid.slds-wrap.slds-large-nowrap > div > div > div:nth-child(2) > div > div > div > div > div.js-header.slds-col.slds-text-align_left > div > h2 > span"),
+                name: Evergage.resolvers.fromSelector("#NTO-page > div.body > div > div > div:nth-child(2) > div > div.cb-section_row.slds-grid.slds-wrap.slds-large-nowrap > div > div > div:nth-child(2) > div > div > div > div > div.js-header.slds-col.slds-text-align_left > div > h2 > span"),
+                url: Evergage.resolvers.fromHref(),
+                imageUrl: () => Evergage.cashDom("#NTO-page > div.body > div > div > div:nth-child(1) > div > div.cb-section_row.slds-grid.slds-wrap.slds-large-nowrap > div > div > div > div > div > div > div.js-content-image.slds-col.slds-m-bottom_medium").css('background-image').slice(4, -1).replace(/"/g, "") || "",
+                description: Evergage.resolvers.fromSelector("#NTO-page > div.body > div > div > div:nth-child(2) > div > div.cb-section_row.slds-grid.slds-wrap.slds-large-nowrap > div > div > div:nth-child(2) > div > div > div > div > lightning-formatted-rich-text > span > p:nth-child(1)"),
+            },
+            Category: {
+                _id: Evergage.resolvers.buildCategoryId("#NTO-page > div.body > div > div > div:nth-child(2) > div > div.cb-section_row.slds-grid.slds-wrap.slds-large-nowrap > div > div > div:nth-child(1) > div > div > div > div > div > ul > li", null, null, (val) => {
+                    if (typeof val === "string") {
+                        return [val.toUpperCase()];
+                    }  
+                }),
+            }
+        },
+        onActionEvent: (event) => {
+            return event;
+        },
+    });
     
     config.pageTypes.push({
         name: "Login",
