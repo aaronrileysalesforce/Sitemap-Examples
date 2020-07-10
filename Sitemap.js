@@ -44,7 +44,6 @@ var allowedDomains = [
                 //Get DMP details from local storage
                 if (window.localStorage.kxdmpsaprod_kuid) {
                     if (window.localStorage.kxdmpsaprod_allsegs) {
-                        
                         event.user.attributes = {kuID: window.localStorage.kxdmpsaprod_kuid, DMPPersona: window.localStorage.kxdmpsaprod_allsegs};
                     } else {
                         event.user.attributes = {kuID: window.localStorage.kxdmpsaprod_kuid};
@@ -238,6 +237,15 @@ var allowedDomains = [
     });
     
     config.pageTypes.push({
+        name: "Community Stories",
+        action: "Community Blog Post",
+        isMatch: () => {
+            return /\/s\/stories/.test(window.location.href) || /\/s\/ntoblog/.test(window.location.href);
+        }
+    });
+    
+    
+    config.pageTypes.push({
         name: "Login",
         action: "Login",
         isMatch: () => {
@@ -320,23 +328,32 @@ var allowedDomains = [
                 Evergage.sendEvent({action: "Mobile - iOS (In-Store Push, App Open)"});
             }),
             Evergage.listener("click", ".beacon.register", () => {
-                var order = {
-                    orderId: Date.now(),
-                    lineItems: [
-                        {
-                            item: {
-                                type: "p",
+                var myOrder = {
+                    Product: {
+                        orderId: Date.now(),
+                        totalValue: 90,
+                        currency: "USD",
+                        lineItems:[
+                            {
                                 _id: "2050857",
-                                price: 90   
-                            },
-                            quantity: 1
-                        }
-                    ]
-                };
+                                price: 90,   
+                                quantity: 1
+                            }
+                        ]
+                    }
+                }
                 // New ActionEvent
                 Evergage.sendEvent({
-                    order,
+                    action: "Puchase",
                     itemAction: Evergage.ItemAction.Purchase,
+                    order: myOrder,
+                    cart: {
+                        singleLine: {
+                            Product: {
+                                _id: "2050857"
+                            }
+                        }
+                    },
                     user: {
                         attributes: {lifeCycleState: "Purchaser"}  
                     } 
