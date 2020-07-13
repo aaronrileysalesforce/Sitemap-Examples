@@ -252,15 +252,31 @@ var allowedDomains = [
         },
         catalog: {
             Blog: {
-                _id: Evergage.resolvers.fromSelector("#NTO-page > div.body > div > div > div:nth-child(2) > div > div.cb-section_row.slds-grid.slds-wrap.slds-large-nowrap > div > div > div:nth-child(2) > div > div > div > div > div.js-header.slds-col.slds-text-align_left > div > h2 > span"),
-                name: Evergage.resolvers.fromSelector("#NTO-page > div.body > div > div > div:nth-child(2) > div > div.cb-section_row.slds-grid.slds-wrap.slds-large-nowrap > div > div > div:nth-child(2) > div > div > div > div > div.js-header.slds-col.slds-text-align_left > div > h2 > span"),
+                _id: () => {
+                    var pParts = location.pathname.split("/");
+                    //console.log(pParts);
+                    var lastPart = "";
+                    var pageParts = "";
+                    var urlID = "";
+                    if (pParts.length > 0) {
+                        lastPart = pParts[pParts.length-1];
+                        //console.log(lastPart);
+                        pageParts = lastPart.split("-");
+                        if (pageParts.length > 0) {
+                            urlID = pageParts[pageParts.length-1];
+                        }
+                    }
+                    return urlID;
+                },
+                name: () => document.title.replace(/&nbsp;/g, " ").replace(/\uFFFD/g, ""),
                 url: Evergage.resolvers.fromHref(),
-                imageUrl: () => Evergage.cashDom("#NTO-page > div.body > div > div > div:nth-child(1) > div > div.cb-section_row.slds-grid.slds-wrap.slds-large-nowrap > div > div > div > div > div > div > div.js-content-image.slds-col.slds-m-bottom_medium").css('background-image').slice(4, -1).replace(/"/g, "") || "",
+                imageUrl: () => { return Evergage.cashDom("#NTO-page > div.body > div > div > div:nth-child(1) > div > div.cb-section_row.slds-grid.slds-wrap.slds-large-nowrap > div > div > div > div > div > div > div.js-content-image.slds-col.slds-m-bottom_medium").css('background-image').slice(4, -1).replace(/"/g, "") || ""},
                 description: Evergage.resolvers.fromSelector("#NTO-page > div.body > div > div > div:nth-child(2) > div > div.cb-section_row.slds-grid.slds-wrap.slds-large-nowrap > div > div > div:nth-child(2) > div > div > div > div > lightning-formatted-rich-text > span > p:nth-child(1)"),
             },
             Category: {
                 _id: Evergage.resolvers.buildCategoryId("#NTO-page > div.body > div > div > div:nth-child(2) > div > div.cb-section_row.slds-grid.slds-wrap.slds-large-nowrap > div > div > div:nth-child(1) > div > div > div > div > div > ul > li", null, null, (val) => {
                     if (typeof val === "string") {
+                        console.log(val);
                         return [val.toUpperCase()];
                     }  
                 }),
