@@ -78,9 +78,6 @@ var allowedDomains = [
                 name: Evergage.resolvers.fromJsonLd("name", val => {
                     return val.replace(/’/g, "'") // temp base64 solution
                 }),
-                description: Evergage.resolvers.fromSelector(".short-description", val => {
-                    return val.replace(/’/g, "'") // temp base64 solution
-                }),
                 url: Evergage.resolvers.fromHref(),
                 imageUrl: Evergage.resolvers.fromSelectorAttribute(
                     ".product-carousel .carousel-item[data-slick-index='0'] img",
@@ -106,8 +103,8 @@ var allowedDomains = [
                                 return ["MEN"];
                         }
                     },
-                    Color: Evergage.resolvers.fromSelectorAttributeMultiple(".color-value", "data-attr-value"),
-                    Feature: Evergage.resolvers.fromSelectorMultiple(".features .feature", (itemClasses) => {
+                    Style: Evergage.resolvers.fromSelectorAttributeMultiple(".color-value", "data-attr-value"),
+                    ItemClass: Evergage.resolvers.fromSelectorMultiple(".features .feature", (itemClasses) => {
                         return itemClasses.map((itemClass) => {
                             return itemClass.trim();
                         });
