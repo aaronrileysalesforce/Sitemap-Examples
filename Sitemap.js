@@ -88,7 +88,7 @@ var allowedDomains = [
                 rating: () => {
                     return Evergage.util.extractFirstGroup(/([.\w]+) out of/, Evergage.cashDom(".ratings .sr-only").text());
                 },
-                Category: Evergage.resolvers.buildCategoryId(".container .product-breadcrumb .breadcrumb a", null, null, (val) => {
+                categories: Evergage.resolvers.buildCategoryId(".container .product-breadcrumb .breadcrumb a", null, null, (val) => {
                     if (typeof val === "string") {
                         return [val.toUpperCase()];
                     }  
