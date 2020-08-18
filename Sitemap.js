@@ -70,9 +70,11 @@ var allowedDomains = [
         catalog: {
             Product: {
                 _id: () => {
-                    var products = getProductsFromDataLayer();
-                    if (products.length > 0) {
+                    const products = getProductsFromDataLayer();
+                    if (typeof products != "undefined" && products.length > 0) {
                         return products[0].id;
+                    } else {
+                        return Evergage.cashDom("span.product-id").text();
                     }
                 },
                 name: Evergage.resolvers.fromJsonLd("name", val => {
@@ -319,7 +321,8 @@ var allowedDomains = [
             {name: "Homepage | Product Recommendations", selector: "div.experience-region.experience-main > div:nth-child(2)"},
             {name: "Homepage | Popup"},
             {name: "Featured Categories", selector: ".experience-component.experience-layouts-3_column"},
-            {name: "Search Bar", selector: "nav form[role='search']"}
+            {name: "Search Bar", selector: "nav form[role='search']"},
+            {name: "home_redirect", selector: "html > body"}
         ]
         
     });
@@ -402,6 +405,11 @@ var allowedDomains = [
         ]  
     });
     
+    config.pageTypes.push({
+        name: "Discover - Stories",
+        action: "Discover - Stories",
+        isMatch: () => /\/default\/stories/.test(window.location.href)
+    });
     
     Evergage.initSitemap(config);
 });
