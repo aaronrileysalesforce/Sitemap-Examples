@@ -98,8 +98,7 @@ var allowedDomains = [
                     }
                 },
                 contentZones: [
-                    { name: "PDP Recs Row 1", selector: ".row.recommendations div[id*='cq']:nth-of-type(1)"},
-                    { name: "PDP Recs Row 2", selector: ".row.recommendations div[id*='cq']:nth-of-type(2)"},
+                    { name: "PDP Recs Container", selector: "div.row.recommendations > div"},
                     { name: "PDP Social", selector: ".product-availability"}
                 ],
                 listeners: [
