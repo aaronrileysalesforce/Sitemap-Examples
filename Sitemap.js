@@ -49,7 +49,10 @@ var allowedDomains = [
             {
                 name: "Product Page",
                 action: "Viewed Item",
-                isMatch: Evergage.resolvers.fromSelector("div.page[data-action='Product-Show']"),
+                //isMatch: Evergage.resolvers.fromSelector("div.page[data-action='Product-Show']"),
+                isMatch: () => {
+                    return Evergage.cashDom("div.page[data-action='Product-Show']").length > 0;
+                },
                 catalog: {
                     Product: {
                         _id: () => {
@@ -63,6 +66,7 @@ var allowedDomains = [
                         name: Evergage.resolvers.fromJsonLd("name", val => {
                             return val.replace(/’/g, "'") // temp base64 solution
                         }),
+                        description: Evergage.resolvers.fromSelector(".short-description"),
                         url: Evergage.resolvers.fromHref(),
                         imageUrl: Evergage.resolvers.fromSelectorAttribute(
                             ".product-carousel .carousel-item[data-slick-index='0'] img",
@@ -73,11 +77,7 @@ var allowedDomains = [
                         rating: () => {
                             return Evergage.util.extractFirstGroup(/([.\w]+) out of/, Evergage.cashDom(".ratings .sr-only").text());
                         },
-                        categories: Evergage.resolvers.buildCategoryId(".container .product-breadcrumb .breadcrumb a", null, null, (val) => {
-                            if (typeof val === "string") {
-                                return [val.toUpperCase()];
-                            }  
-                        }),
+                        categories: Evergage.resolvers.buildCategoryId(".container .product-breadcrumb .breadcrumb a", null, null, (categoryId) => [categoryId.toUpperCase()]),
                         dimensions: {
                             Gender: () => {
                                 if (Evergage.cashDom(".product-breadcrumb .breadcrumb a").first().text().toLowerCase() === "women" ||
@@ -104,8 +104,9 @@ var allowedDomains = [
                 listeners: [
                     Evergage.listener("click", ".add-to-cart", () => {
                         const lineItem = Evergage.util.buildLineItemFromPageState("select[id*=quantity]");
-                        //lineItem.sku = {_id: Evergage.cashDom(".product-detail[data-pid]").attr("data-pid")};
+                        lineItem.sku = {_id: Evergage.cashDom(".product-detail[data-pid]").attr("data-pid")};
                         Evergage.sendEvent({
+                            action: "Added to Cart", 
                             itemAction: Evergage.ItemAction.AddToCart,
                             cart: {
                                 singleLine: {
@@ -127,11 +128,7 @@ var allowedDomains = [
                 },
                 catalog: {
                     Category: {
-                        _id: Evergage.resolvers.buildCategoryId(".breadcrumb .breadcrumb-item a", 1, null, (val) => {
-                            if (typeof val === "string") {
-                                return [val.toUpperCase()];
-                            }  
-                        }),
+                        _id: Evergage.resolvers.buildCategoryId(".breadcrumb .breadcrumb-item a", 1, null, (categoryId) => categoryId.toUpperCase()),
                     }
                 }
             },
@@ -142,14 +139,29 @@ var allowedDomains = [
                     return /\/cart/.test(window.location.href);
                 },
                 itemAction: Evergage.ItemAction.ViewCart,
-                catalog: {
+                order: {
                     Product: {
                         lineItems: {                    
-                            // TODO: add sku handling
-                            //sku: Evergage.resolvers.fromSelectorAttributeMultiple(".product-info .product-details .line-item-quanity-info", "data-pid")
-                            _id: Evergage.resolvers.fromSelectorAttributeMultiple(".product-line-item .line-item-quanity-info", "data-pid"),
+                            sku: { _id: Evergage.resolvers.fromSelectorAttributeMultiple(".product-info .product-details .line-item-quanity-info", "data-pid")},
                             price: Evergage.resolvers.fromSelectorMultiple(".product-info .product-details .pricing"),
                             quantity: Evergage.resolvers.fromSelectorMultiple(".product-info .product-details .qty-card-quantity-count"),
+                        }
+                    }
+                }
+            },
+            {
+                name: "Checkout Process",
+                action: "Checkout Process",
+                isMatch: () => {
+                    return /\/checkout/.test(window.location.href) && !/\/checkout-login/.test(window.location.href);
+                },
+                itemAction: Evergage.ItemAction.Review,
+                order: {
+                    Product: {
+                        lineItems: {
+                            sku: { _id: Evergage.resolvers.fromSelectorAttributeMultiple(".product-line-item .line-item-quanity-info", "data-pid")},
+                            price: Evergage.resolvers.fromSelectorMultiple(".product-line-item .pricing"),
+                            quantity: Evergage.resolvers.fromSelectorMultiple(".product-line-item .qty-card-quantity-count")   
                         }
                     }
                 }
@@ -161,12 +173,10 @@ var allowedDomains = [
                     return /\/confirmation/.test(window.location.href);
                 },
                 itemAction: Evergage.ItemAction.Purchase,
-                catalog: {
+                order: {
                     Product: {
                         lineItems: {
-                            // TODO: add sku handling
-                            //sku: Evergage.resolvers.fromSelectorAttributeMultiple(".product-line-item .line-item-quanity-info", "data-pid"),
-                            _id: Evergage.resolvers.fromSelectorAttributeMultiple(".product-line-item .line-item-quanity-info", "data-pid"),
+                            sku: { _id: Evergage.resolvers.fromSelectorAttributeMultiple(".product-line-item .line-item-quanity-info", "data-pid")},
                             price: Evergage.resolvers.fromSelectorMultiple(".product-line-item .pricing"),
                             quantity: Evergage.resolvers.fromSelectorMultiple(".product-line-item .qty-card-quantity-count")   
                         }
@@ -251,7 +261,7 @@ var allowedDomains = [
                 name: "Login",
                 action: "Login",
                 isMatch: () => {
-                    return /\/login/.test(window.location.href) && !/\/s\/login/.test(window.location.href);
+                    return (/\/login/.test(window.location.href) ||  /\/checkout-login/.test(window.location.href))&& !/\/s\/login/.test(window.location.href);
                 },
                 onActionEvent: (event) => {
                     if (event.action === "Login") {
