@@ -40,6 +40,7 @@ var allowedDomains = [
                     var nlEmail = Evergage.cashDom("#dwfrm_mcsubscribe_email").val();
                     if (nlEmail) {
                         console.log ("Setting user.id to: " + nlEmail);
+                        //Evergage.sendEvent({action: "Email Sign Up - Footer", user: {id: nlEmail} });
                         Evergage.sendEvent({action: "Email Sign Up - Footer", user: {id: nlEmail, email_address:nlEmail, attributes: {EmailAddress: nlEmail}} });
                     }
                 }),
@@ -285,6 +286,7 @@ var allowedDomains = [
                 },
                 contentZones: [
                     {name: "Homepage | Hero", selector: ".experience-carousel-bannerCarousel"},
+                    {name: "home_hero", selector: ".experience-carousel-bannerCarousel"},
                     {name: "Homepage | CTA", selector: ".experience-component[data-slick-index='0'] .hero-banner-overlay-inner"},
                     {name: "Homepage | Sub Hero", selector: "body > div.page > section > div.experience-region.experience-main > div:nth-child(1)"},
                     {name: "Homepage | Product Recommendations", selector: "div.experience-region.experience-main > div:nth-child(2)"},
@@ -294,12 +296,32 @@ var allowedDomains = [
                     {name: "Homepage | Redirect"}
                 ]
             },
+
+            {
+                name: "Community Question",
+                action: "Community Question",
+                isMatch: () => {
+                    return window.location.hostname === "community.northerntrailoutfitters.com" 
+                    && /\/s\/question\//.test(window.location.pathname) 
+                    && !/\/login/.test(window.location.href);
+                },
+                onActionEvent: (event) => {
+                    return event;
+                },
+                contentZones: [
+                    { name: "Community Rec", selector: "#NTO-page > div.body > div > div.slds-grid.slds-wrap.slds-medium-nowrap.slds-large-nowrap > div.slds-col--padded.slds-size--12-of-12.slds-medium-size--4-of-12.slds-large-size--4-of-12.comm-layout-column > div > div:nth-child(4) > div"},
+                ],
+                listeners: [
+                    
+                ]
+            },
             {
                 name: "Community Homepage",
                 action: "Community Homepage",
                 isMatch: () => {
                     return window.location.hostname === "community.northerntrailoutfitters.com" 
                         && /\/s/.test(window.location.pathname) 
+                        && !/\/s\/question\//.test(window.location.pathname) 
                         && !/\/login/.test(window.location.href);
                 },
                 onActionEvent: (event) => {
@@ -309,8 +331,8 @@ var allowedDomains = [
                     Evergage.listener("click", "div.topicContent", () => {
                         var topicLabel = Evergage.cashDom(event.currentTarget).find(".topicLabel").text().trim();
                         console.log("topic label is =" + topicLabel);
-                        if (topicLabel) {
-                            Evergage.sendEvent({ action: "Community Homepage - " + topicLabel });
+                        if (typeof topicLabel === "string") {
+                            Evergage.sendEvent({ action: "Community Homepage - " + topicLabel + "" });
                         }
                     }),
                 ]
@@ -390,6 +412,6 @@ var allowedDomains = [
             }
         }
     };
-
+    
     Evergage.initSitemap(config);
 });
