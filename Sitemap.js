@@ -21,7 +21,7 @@ var allowedDomains = [
                     if (Evergage.util.getParameterByName("subscriberKey") && Evergage.util.getParameterByName("subscriberKey") !== "") {
                         var myEmail = Evergage.util.getParameterByName("subscriberKey");
                         event.user.id = myEmail;
-                        event.user.attributes = {EmailAddress: myEmail};
+                        event.user.attributes = {emailAddress: myEmail};
                         console.log ("Setting user.id to: " + myEmail);
                     }
                     //Get DMP details from local storage
@@ -40,8 +40,7 @@ var allowedDomains = [
                     var nlEmail = Evergage.cashDom("#dwfrm_mcsubscribe_email").val();
                     if (nlEmail) {
                         console.log ("Setting user.id to: " + nlEmail);
-                        //Evergage.sendEvent({action: "Email Sign Up - Footer", user: {id: nlEmail} });
-                        Evergage.sendEvent({action: "Email Sign Up - Footer", user: {id: nlEmail, email_address:nlEmail, attributes: {EmailAddress: nlEmail}} });
+                        Evergage.sendEvent({action: "Email Sign Up - Footer", user: {id: nlEmail, attributes: {emailAddress: nlEmail}} });
                     }
                 }),
             ],
@@ -64,6 +63,7 @@ var allowedDomains = [
                                 return Evergage.cashDom("span.product-id").text();
                             }
                         },
+                        //sku: { _id: Evergage.cashDom(".product-detail[data-pid]").attr("data-pid") },
                         name: Evergage.resolvers.fromJsonLd("name", val => {
                             return val.replace(/’/g, "'") // temp base64 solution
                         }),
@@ -199,7 +199,7 @@ var allowedDomains = [
                                 action: "Community Log In", 
                                 user: {
                                     id: email, 
-                                    attributes: {EmailAddress: email}
+                                    attributes: {emailAddress: email}
                                 },
                                 flags: {
                                     noCampaigns: true
@@ -270,7 +270,7 @@ var allowedDomains = [
                             Evergage.cashDom("form[name='login-form'] button").on("click", () => {
                                 var email = Evergage.cashDom("#login-form-email").val();
                                 if (email) {
-                                    Evergage.sendEvent({action: "Logged In", user: {id: email, attributes: {EmailAddress: email}} });
+                                    Evergage.sendEvent({action: "Logged In", user: {id: email, attributes: {emailAddress: email}} });
                                 }
                             });  
                         }, 500);
@@ -286,7 +286,6 @@ var allowedDomains = [
                 },
                 contentZones: [
                     {name: "Homepage | Hero", selector: ".experience-carousel-bannerCarousel"},
-                    {name: "home_hero", selector: ".experience-carousel-bannerCarousel"},
                     {name: "Homepage | CTA", selector: ".experience-component[data-slick-index='0'] .hero-banner-overlay-inner"},
                     {name: "Homepage | Sub Hero", selector: "body > div.page > section > div.experience-region.experience-main > div:nth-child(1)"},
                     {name: "Homepage | Product Recommendations", selector: "div.experience-region.experience-main > div:nth-child(2)"},
