@@ -373,7 +373,7 @@ var allowedDomains = [
                         }
                         // New ActionEvent
                         Evergage.sendEvent({
-                            action: "Puchase",
+                            action: "Purchase",
                             itemAction: Evergage.ItemAction.Purchase,
                             order: myOrder,
                             cart: {
