@@ -16,6 +16,22 @@ var allowedDomains = [
                 {name: "Infobar - Bottom of Page", selector: "footer.site-footer"}
             ],
             onActionEvent: (event) => {
+                //HoloApp integration
+                if (window.evgIsHoloapp === true) {
+                	var holoappAction = event.action || event.source && event.source.pageType || "Other Screen";
+                
+                	if(!holoappAction.startsWith("iosApp")){
+                		event.action = 'iosApp: ' + holoappAction;
+                		event.source = {channel: 'iosApp'};
+                		if(window.evgHoloappUserId){
+                			event.user = event.user || {};
+                			event.user.id = window.evgHoloappUserId;
+                			// Do we want to map to salesforceContactId and/or emailAddress
+                		}
+                	}
+                	else return null;
+                }
+
                 if (event.user) {
                     //Get Email Address from querystring
                     if (Evergage.util.getParameterByName("subscriberKey") && Evergage.util.getParameterByName("subscriberKey") !== "") {
