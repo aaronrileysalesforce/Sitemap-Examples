@@ -34,11 +34,18 @@ var allowedDomains = [
 
                 if (event.user) {
                     //Get Email Address from querystring
-                    if (Evergage.util.getParameterByName("subscriberKey") && Evergage.util.getParameterByName("subscriberKey") !== "") {
-                        var myEmail = Evergage.util.getParameterByName("subscriberKey");
+                    var myEmail = Evergage.util.getParameterByName("subscriberKey");
+                    if (myEmail) {
                         event.user.id = myEmail;
                         event.user.attributes = {emailAddress: myEmail};
                         console.log ("Setting user.id to: " + myEmail);
+                    } else {
+                        myEmail = Evergage.util.getValueFromNestedObject("window._etmc.user_info.email");
+                        if (myEmail) {
+                            event.user.id = myEmail;
+                            event.user.attributes = {emailAddress: myEmail};
+                            console.log ("Setting user.id to: " + myEmail);
+                        }
                     }
                     //Get DMP details from local storage
                     if (window.localStorage.kxdmpsaprod_kuid) {
@@ -55,8 +62,17 @@ var allowedDomains = [
                 Evergage.listener("submit", ".email-signup", () => {
                     var nlEmail = Evergage.cashDom("#dwfrm_mcsubscribe_email").val();
                     if (nlEmail) {
-                        console.log ("Setting user.id to: " + nlEmail);
-                        Evergage.sendEvent({action: "Email Sign Up - Footer", user: {id: nlEmail, attributes: {emailAddress: nlEmail}} });
+                        console.log ("Setting user.id to from Newsletter Signup: " + nlEmail);
+                        Evergage.sendEvent({
+                                action: "Email Sign Up - Footer", 
+                                user: {
+                                    id: nlEmail, 
+                                    attributes: {emailAddress: nlEmail}
+                                },
+                                flags: {
+                                    noCampaigns: true
+                                }
+                            });
                     }
                 }),
             ],
@@ -79,9 +95,9 @@ var allowedDomains = [
                                 return Evergage.cashDom("span.product-id").text();
                             }
                         },
-                        //sku: { _id: Evergage.cashDom(".product-detail[data-pid]").attr("data-pid") },
+                        sku: { _id: Evergage.cashDom(".product-detail[data-pid]").attr("data-pid") },
                         name: Evergage.resolvers.fromJsonLd("name", val => {
-                            return val.replace(/’/g, "'") // temp base64 solution
+                            return val.replace(/’/g, "'") 
                         }),
                         description: Evergage.resolvers.fromSelector(".short-description"),
                         url: Evergage.resolvers.fromHref(),
@@ -130,8 +146,25 @@ var allowedDomains = [
                                     Product: lineItem
                                 }
                             }
-                        });
+                        }); 
                     }),
+                    Evergage.listener("click", ".attribute", (event) => {
+                        let classList = event.target.classList.value.split(" ");
+                        if (classList.includes("color-value") || classList.includes("size-value")) {
+                            Evergage.sendEvent({
+                                itemAction: Evergage.ItemAction.ViewItemDetail,
+                                catalog: {
+                                    Product: {
+                                        _id: Evergage.util.buildLineItemFromPageState("select[id*=quantity]")._id,
+                                        sku: { _id: Evergage.cashDom(".product-detail[data-pid]").attr("data-pid") },
+                                        dimensions: {
+                                            Color: [Evergage.cashDom(".color-value.selected").attr("data-attr-value")]
+                                        }
+                                    }
+                                }                                
+                            });
+                        }
+                    })
                 ],
             },
             {
@@ -147,7 +180,38 @@ var allowedDomains = [
                     Category: {
                         _id: Evergage.resolvers.buildCategoryId(".breadcrumb .breadcrumb-item a", 1, null, (categoryId) => categoryId.toUpperCase()),
                     }
-                }
+                },
+                listeners: [
+                    Evergage.listener("click", ".quickview", (e) => {
+                        const pid = Evergage.cashDom(e.target).attr("href").split("pid=")[1];
+                        if (!pid) {
+                            return;
+                        }
+        
+                        Evergage.sendEvent({
+                            action: "Category Page Quick View",
+                            itemAction: Evergage.ItemAction.QuickViewItem,
+                            catalog: {
+                                Product: {
+                                    _id: pid
+                                }
+                            }
+                        });
+                    }),
+                    Evergage.listener("click", "body", (e) => {
+                        if (Evergage.cashDom(e.target).closest("button[data-dismiss='modal']").length > 0) {
+                            Evergage.sendEvent({
+                                action: "Close Quick View",
+                                itemAction: Evergage.ItemAction.StopQuickViewItem,
+                            });
+                        } else if (Evergage.cashDom(e.target).closest("#quickViewModal").length > 0 && Evergage.cashDom(e.target).find("#quickViewModal .modal-dialog").length > 0) {
+                            Evergage.sendEvent({
+                                action: "Close Quick View",
+                                itemAction: Evergage.ItemAction.StopQuickViewItem,
+                            });
+                        }
+                    })
+                ]
             },
             {
                 name: "Cart",
@@ -203,9 +267,8 @@ var allowedDomains = [
             {
                 name: "Community Login",
                 action: "Community Login",
-                isMatch: () => {
-                    return /\/s\/login/.test(window.location.href);
-                },
+                //isMatch: () => { return /\/s\/login/.test(window.location.href);},
+                isMatch: () => window.location.hostname === "community.northerntrailoutfitters.com" && /\/s\/login/.test(window.location.href),
                 listeners: [
                     Evergage.listener("click", ".loginButton", () => {
                         var email = Evergage.cashDom("#sfdc_username_container > div > input").val();
@@ -427,6 +490,8 @@ var allowedDomains = [
             }
         }
     };
-    
+
+
+
     Evergage.initSitemap(config);
 });
