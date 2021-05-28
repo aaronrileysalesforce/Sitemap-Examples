@@ -1,0 +1,186 @@
+Evergage.init({
+    cookieDomain: "journeys.com"
+}).then(() => {
+    const config = {
+        global: {
+            contentZones: [
+                { name: "global_infobar_top_of_page", selector: "#siteTopBanner" },
+            ],
+            listeners: [
+                Evergage.listener("click", "#BtnFooterListrackSignup", () => {
+                    const email = Evergage.cashDom("#mailingListEmail").val();
+                    if (email) {
+                        Evergage.sendEvent({ action: "Email Sign Up - Footer", user: { id: email, email_address: email} });
+                    }
+                }),
+            ],
+        },
+        pageTypeDefault: {
+            name: "default"
+        },
+        pageTypes: [
+            {
+                name: "product_detail",
+                action: "Viewed Item",
+                isMatch: () => {
+                    return Evergage.cashDom("div.page-content.detail").length > 0;
+                },
+                catalog: {
+                    Product: {
+                        _id: () => {
+                            if (maProductJson && maProductJson.ReferenceNumber.length > 0) {
+                                return maProductJson.ReferenceNumber;
+                            } else {
+                                //Evergage.cashDom("#panelDetails > div > div > span").text().trim();
+                                return Evergage.resolvers.fromSelector("#detailProductHeader > div.product-styleid.detail-col > span");
+                            }
+                        },
+                        //sku: {_id: Evergage.resolvers.fromSelector("#panelDetails > div > div > span")},
+                        name: Evergage.resolvers.fromSelector("#detailProductHeader > h1"),
+                        description: Evergage.resolvers.fromSelector("#panelDetails > div > p:nth-child(1)"),
+                        url: Evergage.resolvers.fromHref(),
+                        imageUrl: Evergage.resolvers.fromSelectorAttribute("#detailFullImageWrap > img.zoomImg", "src"),
+                        inventoryCount: 1,
+                        price: Evergage.resolvers.fromSelector(".regular-price"),
+                        categories: Evergage.resolvers.buildCategoryId("#breadcrumb li span", 1, 1, (categoryId) => [categoryId.toUpperCase()]),
+                        dimensions: {
+                            Gender: () => {
+                                if (Evergage.cashDom("#breadcrumb li").next().text().toLowerCase().trim() === "women") {
+                                    return ["WOMEN"];
+                                } else if (Evergage.cashDom("#breadcrumb li").next().text().toLowerCase().trim() === "men") {
+                                    return ["MEN"];
+                                } else if (Evergage.cashDom("#breadcrumb li").next().text().toLowerCase().trim() === "girls") {
+                                    return ["Girls"];
+                                } else if (Evergage.cashDom("#breadcrumb li").next().text().toLowerCase().trim() === "boys") {
+                                    return ["Boys"];
+                                }
+                            },
+                            Style: () => { return [Evergage.cashDom("div.product-color").text()];},
+                            Feature: Evergage.resolvers.fromSelectorMultiple("#panelFeatures > div > ul > li", (features) => {
+                                return features.map((feature) => {
+                                    return feature.trim();
+                                });
+                            }),
+                            Brand: () => {
+                                if (maProductJson && maProductJson.VendorBrand.length > 0) { 
+                                    return [maProductJson.VendorBrand];
+                                } else {
+                                    return [];
+                                }
+                            } ,
+                            ItemClass: [Evergage.cashDom("#breadcrumb li").next().next().text().toUpperCase().trim()],
+                        }
+                    }
+                },
+                contentZones: [
+                    { name: "product_detail_recs_row_1", selector: "#productCrossSells" },
+                    { name: "product_detail_recs_row_2", selector: "#productCrossSellsAlt" },
+                ],
+                listeners: [
+                    Evergage.listener("click", "#btnAddToBag", () => {
+                        const lineItem = Evergage.util.buildLineItemFromPageState("select[id*=txtQuantity]");
+                        lineItem.sku = { _id: Evergage.cashDom("#detailProductHeader > div.product-styleid.detail-col > span").text() };
+                        Evergage.sendEvent({
+                            itemAction: Evergage.ItemAction.AddToCart,
+                            cart: {
+                                singleLine: {
+                                    Product: lineItem
+                                }
+                            }
+                        });
+                    }),
+                    Evergage.listener("click", ".attribute", (event) => {
+                        let classList = event.target.classList.value.split(" ");
+                        if (classList.includes("color-value") || classList.includes("size-value")) {
+                            Evergage.sendEvent({
+                                itemAction: Evergage.ItemAction.ViewItemDetail,
+                                catalog: {
+                                    Product: {
+                                        _id: Evergage.util.buildLineItemFromPageState("select[id*=quantity]")._id,
+                                        sku: { _id: Evergage.cashDom(".product-detail[data-pid]").attr("data-pid") }
+                                    },
+                                    dimensions: {
+                                        Color: [Evergage.cashDom(".color-value.selected").attr("data-attr-value")]
+                                    }
+                                }                                
+                            });
+                        }
+                    })
+                ],
+            },
+            {
+                name: "category",
+                action: "Viewed Category",
+                isMatch: () => {
+                    return Evergage.cashDom("#pageContent[data-action='category']").length > 0 && Evergage.cashDom("#breadcrumbWrapper").length > 0;
+                },
+                catalog: {
+                    Category: {
+                        _id: Evergage.resolvers.buildCategoryId("#breadcrumb li span", 1, 1, (categoryId) => categoryId.toUpperCase())
+                    }
+                }
+            },
+            {
+                name: "cart",
+                action: "Viewed Cart",
+                isMatch: () => /\/cart/.test(window.location.href),
+                itemAction: Evergage.ItemAction.ViewCart,
+                catalog: {
+                    Product: {
+                        lineItems: {
+                            _id: Evergage.resolvers.fromSelectorAttributeMultiple(".product-info .product-details .line-item-quanity-info", "data-pid"),
+                            price: Evergage.resolvers.fromSelectorMultiple(".product-info .product-details .pricing"),
+                            quantity: Evergage.resolvers.fromSelectorMultiple(".product-info .product-details .qty-card-quantity-count"),
+                        }
+                    }
+                }
+            },
+            {
+                name: "order_confirmation",
+                action: "Completed Order",
+                isMatch: () => /\/confirmation/.test(window.location.href),
+                itemAction: Evergage.ItemAction.Purchase,
+                catalog: {
+                    Product: {
+                        lineItems: {
+                            _id: Evergage.resolvers.fromSelectorAttributeMultiple(".product-line-item .line-item-quanity-info", "data-pid"),
+                            price: Evergage.resolvers.fromSelectorMultiple(".product-line-item .pricing"),
+                            quantity: Evergage.resolvers.fromSelectorMultiple(".product-line-item .qty-card-quantity-count")
+                        }
+                    }
+                }
+            },
+            {
+                name: "login",
+                action: "Login",
+                isMatch: () => /\/login/.test(window.location.href),
+                onActionEvent: (actionEvent) => {
+                    if (actionEvent.action === "Login") {
+                        Evergage.cashDom("form[name='login-form'] button").on("click", () => {
+                            const email = Evergage.cashDom("#login-form-email").val();
+                            if (email) {
+                                Evergage.sendEvent({ action: "Logged In", user: { id: email } });
+                            }
+                        });
+                    }
+                    return actionEvent;
+                }
+            },
+            {
+                name: "home",
+                action: "Homepage",
+                isMatch: () => /^https?:\/\/(?:[^\/]+\.)?journeys\.com(?:\/(?:\?.*)?)?$/.test(window.location.href),
+                contentZones: [
+                    { name: "home_infobar", selector: "#monetate_selectorBanner_f4f42fd9_00"},
+                    { name: "home_hero", selector: "#pageContent > section:nth-child(1) > div" },
+                    { name: "home_sub_hero", selector: "#pageContent > section:nth-child(2) > div" },
+                    { name: "home_popup" }
+                ]
+            },
+            
+        ]
+    };
+    
+
+    Evergage.initSitemap(config);
+});
