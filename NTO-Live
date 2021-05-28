@@ -126,7 +126,10 @@ var allowedDomains = [
                                 return itemClasses.map((itemClass) => {
                                     return itemClass.trim();
                                 });
-                            })
+                            }),
+                            Brand: () => {
+                                return [JSON.parse(Evergage.cashDom("script[type='application/ld+json']").text())?.brand?.name];
+                            }
                         }
                     }
                 },
