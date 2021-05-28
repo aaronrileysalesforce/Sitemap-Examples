@@ -1,0 +1,298 @@
+var allowedDomains = [
+	 "homedepot.ca",
+    "www.homedepot.com",
+    "www.blinds.com",
+    "www.proreferral.com",
+    "www.thecompanystore.com"
+];
+(allowedDomains.indexOf(window.location.hostname) >= 0) && Evergage.init({
+    cookieDomain: "homedepot.com"
+}).then(function(state) {
+    const config = {
+        global: {
+            contentZones: [
+                 {name: "Global | Message Bar", selector: "#messageBar"}, 
+                 {name: "Global | Slide In"},
+            ],
+            onActionEvent: (event) => {
+                if (event.user) {
+                    //Get Email Address from querystring
+                    if (Evergage.util.getParameterByName("subscriberKey") && Evergage.util.getParameterByName("subscriberKey") !== "") {
+                        var myEmail = Evergage.util.getParameterByName("subscriberKey");
+                        event.user.id = myEmail;
+                        event.user.attributes = {EmailAddress: myEmail};
+                        console.log ("Setting user.id to: " + myEmail);
+                    }
+                    //Get DMP details from local storage
+                    if (window.localStorage.kxdmpsaprod_kuid) {
+                        if (window.localStorage.kxdmpsaprod_allsegs) {
+                            event.user.attributes = {DMPId: window.localStorage.kxdmpsaprod_kuid, DMPAudiences: window.localStorage.kxdmpsaprod_allsegs};
+                        } else {
+                            event.user.attributes = {DMPId: window.localStorage.kxdmpsaprod_kuid};
+                        }
+                    }
+                }
+                return event;
+            },
+            listeners: [
+                Evergage.listener("click", "#footerEmailSignup > fieldset > p.footerEmailSignup__controlGroup > button", () => {
+                    var nlEmail = Evergage.cashDom("#footerEmail").val();
+                    if (nlEmail) {
+                        console.log ("Setting user.id to: " + nlEmail);
+                        Evergage.sendEvent({action: "Email Sign Up - Footer", user: {id: nlEmail, attributes: {EmailAddress: nlEmail}} });
+                    }
+                }),
+            ],
+        },
+        pageTypes: [
+            {
+                name: "Product Page",
+                action: "Viewed Item",
+                isMatch: () => {
+                    if (typeof _T != null && _T.mboxPageType == "PIP" ) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                },
+                contentZones: [
+                    {name: "PIP Alternatives", selector: "div.grid[name='zone-a']"}
+                ],
+                catalog: {
+                    Product: {
+                        _id: Evergage.resolvers.fromSelector("div.grid[data-lg-name='product-info-bar'] > div > h2:nth-child(1)", (val) => {
+                            //Evergage.resolvers.fromSelector("h2.product-info-bar__detail:nth-child(1)", (val) => {
+                            if (typeof val === "string") {
+                                return val.substring(val.indexOf("#")+1,val.length -1);
+                            }
+                        }),
+                        name: Evergage.resolvers.fromSelector("#root > div > div:nth-child(3) > div > div > div.col__12-12.col__5-12--sm > div > div > div.grid > div > div > div.product-details__badge-title--wrapper > span > h1"),
+                        description: Evergage.resolvers.fromSelector("#product-overview > div > div > div.desktop-items > div.desktop-content-wrapper > div > div.col__7-12 > div"),
+                        url: Evergage.resolvers.fromHref(),
+                        imageUrl: Evergage.resolvers.fromSelectorAttribute("#media-gallery > div > div > div.mediagallery__mainimage > div > a > div > img","src"),
+                        inventoryCount: 123,
+                        price: Evergage.resolvers.fromSelector("#standard-price > div > div > span:nth-child(2)"),
+                        categories: Evergage.resolvers.buildCategoryId("#root > div > div.grid.u--paddingTop.u--paddingBottom > div.col__12-12.col__10-12--sm > div > div >div >a", null, null, (val) => {
+                            if (typeof val === "string") {
+                                console.log ("Cat captured on pp2:" + val);
+                                return [val.toUpperCase()];
+                            }  
+                        }),
+                        dimensions: {
+                            ItemClass: Evergage.resolvers.fromSelector("#root > div > div.grid.u--paddingTop.u--paddingBottom > div.col__12-12.col__10-12--sm > div > div > div:last-child",(val) => {
+                                    return [val];
+                                }),
+                            Style: Evergage.resolvers.fromSelector("div.attribute__label > div > span",(val) => {
+                                return [val.trim()];
+                            }),
+                            Brand: Evergage.resolvers.fromSelector("#root > div > div:nth-child(3) > div > div > div.col__12-12.col__5-12--sm > div > div > div.grid > div > div > div.product-details__brand-collection > div > a > span > h2", (val) => {
+                                return [val];
+                            })
+                        },
+                    }
+                },
+                onActionEvent: (event) => {
+                    if (event.user){
+                        event.user.attributes = { lifeCycleState: "Consideration" };
+                    }
+                    return event;
+                },
+            },
+            {
+                name: "Product Page 2",
+                action: "Viewed Item",
+                isMatch: () => {
+                    if (Evergage.resolvers.fromSelectorAttribute("#root > div", "data-lg-name") == "pip-content") {
+                         return true;
+                    } else return false;
+
+                },
+                contentZones: [
+                    {name: "PIP Alternatives", selector: "div.grid[name='zone-a']"}
+                ],
+                catalog: {
+                    Product: {
+                        _id: Evergage.resolvers.fromSelector("#root > div > div:nth-child(3) > div > div > div.sticky.col__12-12.col__7-12--sm > div > div:nth-child(1) > div > div > h2:nth-child(1)", (val) => {
+                            if (typeof val === "string") {
+                                return val.substring(val.indexOf("#")+1,val.length -1);
+                            }
+                        }),
+                        name: Evergage.resolvers.fromSelector("#root > div > div > div > div.grid.productmarquee.flush > div.col__12-12.col__5-12--sm > div:nth-child(1) > div > div > div.product-title > h1"),
+                        description: Evergage.resolvers.fromSelector("#product-overview > div > div > div.desktop-items > div.desktop-content-wrapper > div > div.col__7-12 > div"),
+                        url: Evergage.resolvers.fromHref(),
+                        imageUrl: Evergage.resolvers.fromSelectorAttribute("#media-gallery > div > div > div.mediagallery__mainimage > div > a > div > img","src"),
+                        inventoryCount: 123,
+                        price: Evergage.resolvers.fromSelector("#eco-rebate-price > div.price > div > span:nth-child(2)"),
+                        categories: Evergage.resolvers.buildCategoryId("#root > div > div.grid.u--paddingTop.u--paddingBottom > div.col__12-12.col__10-12--sm > div > div >div >a", null, null, (val) => {
+                            if (typeof val === "string") {
+                                console.log ("Cat captured on pp2:" + val);
+                                return [val.toUpperCase()];
+                            }  
+                        }),
+                        dimensions: {
+                            ItemClass: Evergage.resolvers.fromSelector("#root > div > div.grid.u--paddingTop.u--paddingBottom > div.col__12-12.col__10-12--sm > div > div > div:last-child",(val) => {
+                                    return [val];
+                                }),
+                            Style: Evergage.resolvers.fromSelector("#root > div > div:nth-child(3) > div > div > div.col__12-12.col__5-12--sm > div.zone-card.overflow > div > div:nth-child(6) > div > div > div.attribute__label > div > span",(val) => {
+                                return [val.trim()];
+                            }),
+                            Brand: Evergage.resolvers.fromSelector("#root > div > div:nth-child(3) > div > div > div.col__12-12.col__5-12--sm > div > div > div.grid > div > div > div.product-details__brand-collection > div > a > span > h2", (val) => {
+                                return [val];
+                            })
+                        },
+                    }
+                },
+                onActionEvent: (event) => {
+                    if (event.user){
+                        event.user.attributes = { lifeCycleState: "Consideration" };
+                    }
+                    return event;
+                },
+            },
+            
+            {
+                name: "Cart",
+                action: "Viewed Cart",
+                isMatch: () => {
+                    return /\/mycart\/home/.test(window.location.href);
+                },
+                itemAction: Evergage.ItemAction.ViewCart,
+            },
+            {
+                name: "DIY Projects and Ideas",
+                action: "Viewed Guide",
+                isMatch: Evergage.resolvers.fromSelector("#container > div:nth-child(5) > div.article-page"),
+                onActionEvent: (event) => {
+                    return event;
+                },
+                catalog: {
+                    Article: {
+                        _id: Evergage.resolvers.fromSelector("#container > div:nth-child(5) > div.article-page > article > div.article.col__12-12.col__7-12--sm.col__7-12--md.col__7-12--lg > section.content_header_title > div.row-header.first-row-header > div > h1", (val) => {
+                            if (typeof val === "string") {
+                                return val;
+                            }  
+                        }),
+                        name: Evergage.resolvers.fromSelector("#container > div:nth-child(5) > div.article-page > article > div.article.col__12-12.col__7-12--sm.col__7-12--md.col__7-12--lg > section.content_header_title > div.row-header.first-row-header > div > h1", (val) => {
+                            if (typeof val === "string") {
+                                return val;
+                            } 
+                        }), 
+                        description: Evergage.resolvers.fromSelector("#container > div:nth-child(5) > div.article-page > article > div.article.col__12-12.col__7-12--sm.col__7-12--md.col__7-12--lg > div.article_info_flex > section > section"),            
+                        url: Evergage.resolvers.fromHref(),
+                        categories: Evergage.resolvers.buildCategoryId("#breadcrumb > ul > li", null, null, (val) => {
+                            if (typeof val === "string") {
+                                console.log ("Cat captured on DIY:" + val);
+                                return [val.toUpperCase()];
+                            }  
+                        }),
+                        dimensions: {
+                            ItemClass: Evergage.resolvers.fromSelector("#container > div:nth-child(5) > div.article-page > article > div.article.col__12-12.col__7-12--sm.col__7-12--md.col__7-12--lg > section.content_header_title > h2", (val) => {
+                                if (typeof val === "string") {
+                                    return [val.replace(/[\t|\n]/g, '')];
+                                }
+                            }),
+                            //Keyword: Evergage.resolvers.fromSelectorMultiple("#container > div:nth-child(5) > div.article-page > article > div.article.col__12-12.col__7-12--sm.col__7-12--md.col__7-12--lg > div.content_header_quickjump > nav > div > ul > li"),
+                        }
+                    },
+                }, 
+            },
+            {
+                name: "Category 1",
+                action: "Viewed Category",
+                isMatch: () => { 
+                    if ( Evergage.cashDom("#headerCrumb").length > 0) { return true; } else return false;
+                },
+                onActionEvent: (event) => {
+                    return event;
+                },
+                catalog: {
+                    Category: {
+                        _id: Evergage.resolvers.buildCategoryId("#headerCrumb > li", null, null, (val) => {
+                                    console.log ("Cat captured on Cat page:" + val);
+                                    if (typeof val === "string") {
+                                        return [val.toUpperCase()];
+                                    }
+                                })
+                    }
+                    
+                }
+            },
+            {
+                name: "Category 2",
+                action: "Viewed Category",
+                isMatch: () => { 
+                    if ( Evergage.cashDom("#header-crumb").length > 0) { return true; } else return false;
+                },
+                onActionEvent: (event) => {
+                    return event;
+                },
+                catalog: {
+                    Category: {
+                        _id: Evergage.resolvers.buildCategoryId("#header-crumb > li > a", null, null , (val) => {
+                                    return [val.toUpperCase()]; 
+                                })
+                    }
+                }
+            },
+            {
+                name: "Category 3",
+                action: "Viewed Category",
+                isMatch: () => { 
+                    if ( Evergage.cashDom(".breadcrumbs__nowrap--3qP_e").length > 0) { return true; } else return false;
+                },
+                onActionEvent: (event) => {
+                    return event;
+                },
+                catalog: {
+                    Category: {
+                        _id: Evergage.resolvers.buildCategoryId("#root > div > div:nth-child(1) > div > div > div > div:last-child", null, null , (val) => {
+                                    return [val.toUpperCase()];
+                                 })
+                    }
+                }
+            },
+            {
+                name: "Login",
+                action: "Login",
+                isMatch: () => {
+                    return /\/auth\/view\/signin/.test(window.location.href) && !/\/s\/login/.test(window.location.href);
+                },
+                onActionEvent: (event) => {
+                    if (event.action === "Login") {
+                        window.setTimeout(() => {
+                            Evergage.cashDom("#single-signin__body > div > div.col__12-12.col__8-12--xs.u--paddingNone-top.col__4-12--lg.col__4-12--md.col__6-12--sm > form > button").on("click", () => {
+                                var email = Evergage.cashDom("#email").val();
+                                if (email) {
+                                    Evergage.sendEvent({action: "Logged In", user: {id: email, attributes: {EmailAddress: email}} });
+                                }
+                            });  
+                        }, 500);
+                    }
+                    return event;
+                },
+            },
+            {
+                 name: "Homepage",
+                action: "Homepage",
+                isMatch: () => {
+                    return THD_GLOBAL.isHomePage;
+                },
+                contentZones: [
+                    {name: "Homepage | Carousel", selector: "#container > div:nth-child(6) > div:nth-child(1) > div > div > div > div.owl-stage-outer > div.owl-stage > div:nth-child(5) > div > div"},
+                    {name: "Homepage | Hero", selector: "#hp_sponsored__hero__wrapper"},
+                    {name: "Homepage | Product Recommendations", selector: "#container > div:nth-child(6) > div:nth-child(2)"},
+                    {name: "Homepage | Product Recommendations 2", selector: "#container > div:nth-child(6) > div:nth-child(6) > div:nth-child(3)"},
+                    {name: "Search Bar", selector: "#headerSearchForm > div.SearchBox__searchBar > div"}
+                ]
+            },
+
+           
+        ],
+        pageTypeDefault: {
+            name: "Default"
+        }
+    };
+    
+    
+    Evergage.initSitemap(config);
+});
