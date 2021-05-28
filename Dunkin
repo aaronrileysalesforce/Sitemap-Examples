@@ -1,0 +1,295 @@
+Evergage.init({
+    //cookieDomain: "dunkindonuts.com"
+}).then(() => {
+    var config = {
+        global: {
+            contentZones: []
+        },
+        pageTypeDefault: {
+            name: "default"
+        },
+        pageTypes: []
+    };
+    
+    // This section will globally set any parameters as user attributes. 
+    
+    config.global.onActionEvent = function(event) {
+        
+        if (!event.user) {
+            event.user = {};
+        }
+
+        return event;
+    }
+
+    // Fill out any page types for you demo here. These are key value pairs, where the key (before the colon)
+    // is the action name that will be sent in the event when navigating to the url (after the colon). Copy
+    // the entire url from the browser (including the https and www) that you want to map
+
+    const pageTypeMapping = {
+       "Wake-Up Wrap® | Unwrap Perfection | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/sandwiches-and-more/wake-up-wrap",
+"Vanilla Chai | Vanilla Flavor, Spices & Milk | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/teas-and-more/vanilla-chai",
+"Turkey Sausage, Egg & Cheese | Twist on a Classic | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/sandwiches-and-more/turkey-sausage-flatbread",
+"Terms of Use | Dunkin' - Dunkin' Donuts":  "https://news.dunkindonuts.com/terms",
+"Teas & More | Freshly Crafted Flavors - Dunkin' Donuts":  "https://www.dunkindonuts.com/en/menu/teas-and-more",
+"Snackin' Bacon | Crispy Seasoned Bacon | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/snacks-and-wraps/snackin-bacon",
+"Shop | Dunkin'® - Dunkin' Donuts":  "https://www.dunkindonuts.com/en/shop",
+"Sausage, Egg & Cheese | A Sandwich Made to Order | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/sandwiches-and-more/sausage-egg-cheese",
+"Power Breakfast Sandwich | A Boost in Every Bite | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/sandwiches-and-more/power-breakfast-sandwich",
+"Packaged Tea | Premium Teas, Anytime | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/brew-at-home/packaged-tea",
+"Packaged Coffee | Your Favorites, Anytime | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/brew-at-home/packaged-coffee",
+"Offers & Promotions | Dunkin'® - Dunkin' Donuts":  "https://www.dunkindonuts.com/en/menu/offers-promotions",
+"Nutrition | Dunkin'® - Dunkin' Donuts":  "https://www.dunkindonuts.com/en/menu/nutrition",
+"MUNCHKINS® Donut Hole Treats | Try Them All | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/donuts/munchkins",
+"Multigrain Thin | Whole Grain Thin & Spread | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/bagels-and-muffins/multigrain-thin",
+"Muffins | A Delicious Go-To Classic | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/bagels-and-muffins/muffins",
+"Muffins | A Delicious Go-To Classic | Dunkin'® - Dunkin' Donuts":  "https://www.dunkindonuts.com/en/menu/bagels-and-muffins/muffins",
+"Matcha Latte | Sweetened Green Tea & Milk | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/teas-and-more/matcha-latte",
+"K-Cup® Pods | Take Your Favorite Coffee Home | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/brew-at-home/k-cups",
+"Iced Tea | Refreshing & Revitalizing Teas | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/teas-and-more/iced-tea",
+"Iced Matcha Latte | Sweetened Green Tea & Milk | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/teas-and-more/iced-matcha-latte",
+"Iced Cappuccino | Frothy & Bold Deliciousness | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/espresso-and-coffee/iced-cappuccino",
+"Iced Americano | Refreshing Espresso Drink | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/espresso-and-coffee/iced-americano",
+"Hot Tea | High-Quality Loose Leaf Teas | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/teas-and-more/tea",
+"Hot Macchiato | Creamy Milk & Espresso Shot | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/espresso-and-coffee/macchiato",
+"Hot Latte | Freshly Brewed Espresso Drink | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/espresso-and-coffee/latte",
+"Hot Coffee | Freshly Ground 100% Arabica Beans | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/espresso-and-coffee/coffee",
+"Hot Chocolate | Creamy & Craveable - Dunkin' Donuts":  "https://www.dunkindonuts.com/en/menu/teas-and-more/hot-chocolate",
+"Hot Cappuccino | Freshly Brewed & Blended | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/espresso-and-coffee/cappuccino",
+"Hot Americano | Rich & Robust Espresso Drink | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/espresso-and-coffee/americano",
+"Hash Browns | Lightly Seasoned & Golden Brown | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/snacks-and-wraps/hashbrowns",
+"Ham, Egg & Cheese | An Irresistible Breakfast | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/sandwiches-and-more/ham-egg-cheese",
+"Frozen Matcha Latte | Sip on the Bright Side | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/frozen-drinks/frozen-matcha-latte",
+"Frozen Drinks | Freshly Blended Creations | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/frozen-drinks",
+"Frozen Coffee | Smooth, Creamy & Full of Flavor | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/frozen-drinks/frozen-iced-coffee",
+"Frozen Chocolate | Frozen Chocolatey Indulgence | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/frozen-drinks/hot-chocolate-frozen",
+"Find Your Nearest Dunkin' Location | Dunkin' | Dunkin'®":  "https://www.dunkindonuts.com/en/locations",
+"Cold Brew | Brewed Slow, Served Fast | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/espresso-and-coffee/cold-brew",
+"Espresso | Smooth & Bold Taste | Dunkin'® - Dunkin' Donuts":  "https://www.dunkindonuts.com/en/menu/espresso-and-coffee/espresso",
+"English Muffin | Oven-Toasted Deliciousness | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/bagels-and-muffins/english-muffin",
+"Egg & Cheese | Simple Meets Satisfying | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/sandwiches-and-more/egg-cheese",
+"Dunkaccino® | Blended Coffee & Hot Chocolate | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/teas-and-more/dunkaccino",
+"Donuts | Variety of Flavors Free of Artificial Dye | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/donuts/donuts",
+"Croissant | Freshly Baked & Delicious - Dunkin' Donuts":  "https://www.dunkindonuts.com/en/menu/bagels-and-muffins/croissant",
+"Coolatta® | Fun & Refreshing Flavors | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/frozen-drinks/coolatta",
+"Beyond Sausage® Breakfast Sandwich | Plant-Based Patties ...":  "https://www.dunkindonuts.com/en/menu/sandwiches-and-more/beyond-sausage",
+"Bagels with Cream Cheese Spread | Start Your Day Right ...":  "https://www.dunkindonuts.com/en/menu/bagels-and-muffins/bagels",
+"Bacon Egg & Cheese | A Breakfast Classic | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/sandwiches-and-more/bacon-egg-cheese",
+"About Us | Dunkin' - Dunkin' Donuts":  "https://news.dunkindonuts.com/about",
+"About | Dunkin'® - Dunkin' Donuts":  "https://www.dunkindonuts.com/en/about",
+"Sandwiches & More | Stacked with Flavor | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/sandwiches-and-more",
+"Donuts & Munchkins® | Irresistibly Delicious | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/donuts",
+"Bagels & Muffins | Delicious Goodies - Dunkin' Donuts":  "https://www.dunkindonuts.com/en/menu/bagels-and-muffins",
+"Contact Dunkin' Corporate & Customer Service | Dunkin'":  "https://news.dunkindonuts.com/contacts",
+"Espresso and Coffee | Freshly Crafted Beverages | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/espresso-and-coffee",
+"Brew at Home | Pour Your Favorites At Home | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/brew-at-home",
+"Blog | Dunkin'":  "https://news.dunkindonuts.com/blog",
+"Menu | Classics & New Favorites | Dunkin'® - Dunkin' Donuts":  "https://www.dunkindonuts.com/en/menu",
+"Dunkin' Privacy Policy | Dunkin' - Dunkin' Donuts":  "https://news.dunkindonuts.com/policy",
+"Donuts & Munchkins® | Irresistibly Delicious | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/donuts",
+"Dunkin'® | America's Favorite Coffee, Espresso and Donuts":  "https://www.dunkindonuts.com/",
+"Snacks & Wraps | Freshly Made with Deliciousness | Dunkin'®":  "https://www.dunkindonuts.com/en/menu/snacks-and-wraps",
+        
+        
+        
+    }
+    // Fill out any actions for your demo here. These are key value pairs, where the key (before the colon)
+    // is the action name that will be sent in the event when the selector (after the colon) is clicked on the page
+
+    const actionMappingClicks = {
+        "Action 1": "#selector1",
+        "Action 2": "#selector2",
+    };
+
+    // Fill out any content zones for your demo here. These are key value pairs, where the key (before the colon)
+    // is the content zone name that will be defined on the page when the selector (after the colon) appears on that page
+
+    const contentZoneMapping = {
+        "global_infobar_top_of_page": "body > div > div.header",
+        "global_infobar_bottom_of_page": "body > div > div.footer",
+        "global_popup": "",
+    };
+    
+    // HELPER CODE BELOW - DO NOT EDIT
+    
+    // The code below handles all of the page types that are defined in the pageTypeMapping object above
+
+    Object.keys(pageTypeMapping).forEach(pageType => {
+        let url = pageTypeMapping[pageType];
+        url = url.replace(/([+,?])+/g, "\\$&");
+        const re = new RegExp("^" + url + "");
+        config.pageTypes.push({
+            isMatch: () => {
+                return re.test(window.location.href);
+            },
+            name: pageType,
+            action: pageType
+        });
+    });
+
+    // The code below handles all of the actions that are defined in the actionMappingClicks object above
+
+    Object.keys(actionMappingClicks).forEach(action => {
+        const selector = actionMappingClicks[action];
+        Evergage.cashDom(selector).on("click", () => {
+            Evergage.sendEvent({action});
+        });
+    });
+
+    // The code below handles all of the content zones that are defined in the contentZonesMapping object above
+
+    Object.keys(contentZoneMapping).forEach(contentZone => {
+        const selector = contentZoneMapping[contentZone];
+        config.global.contentZones.push({name: contentZone, selector: selector});
+    });
+
+    config.pageTypes.push({
+        
+        name: "Kiosk View",
+        action: "Kiosk View",
+        isMatch: function() {
+            return /pub\.s4\.exacttarget.com\/15sbffcru5x/.test(window.location.href);
+        },
+        contentZones: [
+                    { name: "product_detail_recs_row_1", selector: "#evg-personalize-left" },
+                    { name: "product_detail_recs_row_2", selector: "#evg-personalize-right" },
+                    { name: "product_detail_recs_row_1_2", selector: "#evg-personalize-left-2" },
+                    { name: "product_detail_recs_row_2_2", selector: "#evg-personalize-right-2" },
+                ],
+        listeners: [
+            Evergage.listener("click", "#appviewImage", () => {
+                var screenView = Evergage.cashDom("#appviewImage").attr("class");
+                if (screenView == "1" || screenView == "2" || screenView == "3") {
+                    Evergage.sendEvent({action: "Kiosk View: " + screenView});
+                }
+                else if (screenView == "4") {
+                    //Evergage.sendEvent({action: "Kiosk View: " + screenView, user: { id: "don.itzrul@example.com" }});
+                    var myOrder = {
+                        Product: {
+                            orderId: Date.now(),
+                            totalValue: 9.77,
+                            currency: "USD",
+                            lineItems:[
+                                {
+                                    _id: "Coffee",
+                                    price: 2.75,   
+                                    quantity: 1
+                                },
+                                {
+                                    _id: "Munchkins",
+                                    price: 2,   
+                                    quantity: 1
+                                },
+                                {
+                                    _id: "Bacon, Egg and Cheese",
+                                    price: 4.29,   
+                                    quantity: 1
+                                },
+                            ]
+                        }
+                    }
+                    // New ActionEvent
+                    Evergage.sendEvent({
+                        action: "Kiosk Checkout: " + screenView,
+                        itemAction: Evergage.ItemAction.Purchase,
+                        order: myOrder,
+                        cart: {
+                            singleLine: {
+                                Product: {
+                                    _id: "Coffee"
+                                }
+                            }
+                        },
+                        user: { id: "don.itzrul@example.com" }
+                    });
+                } 
+                else if (screenView == "5") {
+                    Evergage.sendEvent({action: "Mobile Push: " + screenView});
+                }
+                else if (screenView == "6") {
+                    Evergage.sendEvent({action: "Email Open: " + screenView});
+                }
+                else {
+                    Evergage.sendEvent({action: "Screen View: " + screenView});
+                }
+                
+            }),
+        ]  
+    });
+
+
+    config.pageTypes.push({
+        
+        name: "Mobile View",
+        action: "Mobile View",
+        isMatch: function() {
+            return /pub\.s4\.exacttarget.com\/5ysmaecn12r/.test(window.location.href);
+        },
+        contentZones: [
+                    { name: "product_detail_recs_row_1", selector: "#evg-personalize-left" },
+                    { name: "product_detail_recs_row_2", selector: "#evg-personalize-right" },
+                    { name: "product_detail_recs_row_1_2", selector: "#evg-personalize-left-2" },
+                    { name: "product_detail_recs_row_2_2", selector: "#evg-personalize-right-2" },
+                ],
+        listeners: [
+            Evergage.listener("click", "#appviewImage", () => {
+                var screenView = Evergage.cashDom("#appviewImage").attr("class");
+                if (screenView == "16") {
+                    var myOrder = {
+                        Product: {
+                            orderId: Date.now(),
+                            totalValue: 9.77,
+                            currency: "USD",
+                            lineItems:[
+                                {
+                                    _id: "Coffee",
+                                    price: 2.75,   
+                                    quantity: 1
+                                },
+                                {
+                                    _id: "Munchkins",
+                                    price: 2,   
+                                    quantity: 1
+                                },
+                                {
+                                    _id: "Bacon, Egg and Cheese",
+                                    price: 4.29,   
+                                    quantity: 1
+                                },
+                            ]
+                        }
+                    }
+                    // New ActionEvent
+                    Evergage.sendEvent({
+                        action: "Mobile Checkout: " + screenView,
+                        itemAction: Evergage.ItemAction.Purchase,
+                        order: myOrder,
+                        cart: {
+                            singleLine: {
+                                Product: {
+                                    _id: "Coffee"
+                                }
+                            }
+                        },
+                        user: { id: "don.itzrul@example.com" }
+                    });
+                } 
+                else if (screenView == "17") {
+                    Evergage.sendEvent({action: "Mobile Push: " + screenView});
+                }
+                else if (screenView == "18") {
+                    Evergage.sendEvent({action: "Email Open: " + screenView});
+                }
+                else {
+                    Evergage.sendEvent({action: "Screen View: " + screenView});
+                }
+                
+            }),
+        ]  
+    });
+
+    
+    Evergage.cashDom(() => {
+        Evergage.initSitemap(config);
+    });
+});
