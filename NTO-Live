@@ -47,6 +47,7 @@ var allowedDomains = [
                             console.log ("Setting user.id to: " + myEmail);
                         }
                     }
+                    /*
                     //Get DMP details from local storage
                     if (window.localStorage.kxdmpsaprod_kuid) {
                         if (window.localStorage.kxdmpsaprod_allsegs) {
@@ -54,7 +55,7 @@ var allowedDomains = [
                         } else {
                             event.user.attributes = {kuID: window.localStorage.kxdmpsaprod_kuid};
                         }
-                    }
+                    }*/
                 }
                 return event;
             },
@@ -140,16 +141,15 @@ var allowedDomains = [
                 listeners: [
                     Evergage.listener("click", ".add-to-cart", () => {
                         const lineItem = Evergage.util.buildLineItemFromPageState("select[id*=quantity]");
-                        lineItem.sku = {_id: Evergage.cashDom(".product-detail[data-pid]").attr("data-pid")};
+                        lineItem.sku = { _id: Evergage.cashDom(".product-detail[data-pid]").attr("data-pid") };
                         Evergage.sendEvent({
-                            action: "Added to Cart", 
                             itemAction: Evergage.ItemAction.AddToCart,
                             cart: {
                                 singleLine: {
                                     Product: lineItem
                                 }
                             }
-                        }); 
+                        });
                     }),
                     Evergage.listener("click", ".attribute", (event) => {
                         let classList = event.target.classList.value.split(" ");
@@ -168,7 +168,7 @@ var allowedDomains = [
                             });
                         }
                     })
-                ],
+                ]
             },
             {
                 name: "Category",
@@ -181,7 +181,11 @@ var allowedDomains = [
                 },
                 catalog: {
                     Category: {
-                        _id: Evergage.resolvers.buildCategoryId(".breadcrumb .breadcrumb-item a", 1, null, (categoryId) => categoryId.toUpperCase()),
+                        _id: () => {
+                            return Evergage.DisplayUtils.pageElementLoaded(".breadcrumb .breadcrumb-item a", "html").then((ele) => {
+                                return Evergage.resolvers.buildCategoryId(".breadcrumb .breadcrumb-item a", 1, null, (categoryId) => categoryId.toUpperCase());
+                            });
+                        }
                     }
                 },
                 listeners: [
@@ -219,16 +223,26 @@ var allowedDomains = [
             {
                 name: "Cart",
                 action: "Viewed Cart",
-                isMatch: () => {
-                    return /\/cart/.test(window.location.href);
-                },
+                isMatch: () => /\/cart/.test(window.location.href),
                 itemAction: Evergage.ItemAction.ViewCart,
-                order: {
+                catalog: {
                     Product: {
-                        lineItems: {                    
-                            sku: { _id: Evergage.resolvers.fromSelectorAttributeMultiple(".product-info .product-details .line-item-quanity-info", "data-pid")},
-                            price: Evergage.resolvers.fromSelectorMultiple(".product-info .product-details .pricing"),
-                            quantity: Evergage.resolvers.fromSelectorMultiple(".product-info .product-details .qty-card-quantity-count"),
+                        lineItems: {
+                            _id: () => {
+                                return Evergage.DisplayUtils.pageElementLoaded(".cart-empty, .checkout-btn", "html").then((ele) => {
+                                    return Evergage.resolvers.fromSelectorAttributeMultiple(".product-info .product-details .line-item-quanity-info", "data-pid")
+                                })
+                            },
+                            price: () => {
+                                return Evergage.DisplayUtils.pageElementLoaded(".cart-empty, .checkout-btn", "html").then((ele) => {
+                                    return Evergage.resolvers.fromSelectorMultiple(".product-info .product-details .pricing");
+                                })
+                            },
+                            quantity: () => {
+                                return Evergage.DisplayUtils.pageElementLoaded('.cart-empty, .checkout-btn', "html").then((ele) => {
+                                    return Evergage.resolvers.fromSelectorMultiple(".product-info .product-details .qty-card-quantity-count");
+                                });
+                            },
                         }
                     }
                 }
@@ -253,16 +267,31 @@ var allowedDomains = [
             {
                 name: "Order Confirmation",
                 action: "Order Confirmation",
-                isMatch: () => {
-                    return /\/confirmation/.test(window.location.href);
-                },
+                isMatch: () => /\/confirmation/.test(window.location.href),
                 itemAction: Evergage.ItemAction.Purchase,
-                order: {
+                catalog: {
                     Product: {
+                        orderId: () => {
+                            return Evergage.DisplayUtils.pageElementLoaded(".order-number", "html").then((ele) => {
+                                return Evergage.resolvers.fromSelector(".order-number");
+                            });
+                        },
                         lineItems: {
-                            sku: { _id: Evergage.resolvers.fromSelectorAttributeMultiple(".product-line-item .line-item-quanity-info", "data-pid")},
-                            price: Evergage.resolvers.fromSelectorMultiple(".product-line-item .pricing"),
-                            quantity: Evergage.resolvers.fromSelectorMultiple(".product-line-item .qty-card-quantity-count")   
+                            _id: () => {
+                                return Evergage.DisplayUtils.pageElementLoaded(".product-line-item line-item-quanity-info", "html").then((ele) => {
+                                    return Evergage.resolvers.fromSelectorAttributeMultiple(".product-line-item .line-item-quanity-info", "data-pid");
+                                });
+                            },
+                            price:  () => {
+                                return Evergage.DisplayUtils.pageElementLoaded(".product-line-item .pricing", "html").then((ele) => {
+                                    return Evergage.resolvers.fromSelectorAttributeMultiple(".product-line-item .pricing", "data-pid");
+                                });
+                            },
+                            quantity:  () => {
+                                return Evergage.DisplayUtils.pageElementLoaded(".product-line-item .qty-card-quantity-count", "html").then((ele) => {
+                                    return Evergage.resolvers.fromSelectorAttributeMultiple(".product-line-item .qty-card-quantity-count", "data-pid");
+                                });
+                            },
                         }
                     }
                 }
@@ -322,11 +351,11 @@ var allowedDomains = [
                             }
                             return urlID;
                         },
-                        name: () => document.title.replace(/&nbsp;/g, " ").replace(/\uFFFD/g, ""),
+                        name: Evergage.resolvers.fromSelector("#NTO-page > div.body > div > div > div:nth-child(2) > div > div.cb-section_row.slds-grid.slds-wrap.slds-large-nowrap > div > div > div:nth-child(2) > div > div > div > div > div.js-header.slds-col.slds-text-align_left > div > h2 > span"),
                         url: Evergage.resolvers.fromHref(),
                         imageUrl: () => { return Evergage.cashDom("#NTO-page > div.body > div > div > div:nth-child(1) > div > div.cb-section_row.slds-grid.slds-wrap.slds-large-nowrap > div > div > div > div > div > div > div.js-content-image.slds-col.slds-m-bottom_medium").css('background-image').slice(4, -1).replace(/"/g, "") || ""},
                         description: Evergage.resolvers.fromSelector("#NTO-page > div.body > div > div > div:nth-child(2) > div > div.cb-section_row.slds-grid.slds-wrap.slds-large-nowrap > div > div > div:nth-child(2) > div > div > div > div > lightning-formatted-rich-text > span > p:nth-child(1)"),
-                    },
+                    },/*
                     Category: {
                         _id: Evergage.resolvers.buildCategoryId("#NTO-page > div.body > div > div > div:nth-child(2) > div > div.cb-section_row.slds-grid.slds-wrap.slds-large-nowrap > div > div > div:nth-child(1) > div > div > div > div > div > ul > li", null, null, (val) => {
                             if (typeof val === "string") {
@@ -334,7 +363,7 @@ var allowedDomains = [
                                 return [val.toUpperCase()];
                             }  
                         }),
-                    }
+                    }*/
                 },
                 onActionEvent: (event) => {
                     return event;
