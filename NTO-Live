@@ -256,6 +256,7 @@ var allowedDomains = [
                 itemAction: Evergage.ItemAction.Review,
                 order: {
                     Product: {
+                        
                         lineItems: {
                             _id: () => {
                                 return Evergage.DisplayUtils.pageElementLoaded(".cart-empty, .submit-shipping", "html").then((ele) => {
@@ -273,6 +274,7 @@ var allowedDomains = [
                                 });
                             },
                         }
+                       
                     }
                 }
             },
@@ -309,89 +311,6 @@ var allowedDomains = [
                 }
             },
             {
-                name: "Community Login",
-                action: "Community Login",
-                //isMatch: () => { return /\/s\/login/.test(window.location.href);},
-                isMatch: () => window.location.hostname === "community.northerntrailoutfitters.com" && /\/s\/login/.test(window.location.href),
-                listeners: [
-                    Evergage.listener("click", ".loginButton", () => {
-                        var email = Evergage.cashDom("#sfdc_username_container > div > input").val();
-                        console.log(email + "is the evergage email");
-                        if (email) {
-                            Evergage.sendEvent({
-                                action: "Community Log In", 
-                                user: {
-                                    id: email, 
-                                    attributes: {emailAddress: email}
-                                },
-                                flags: {
-                                    noCampaigns: true
-                                }
-                            });
-                        }
-                    }),
-                ]
-            },
-            {
-                name: "Community Stories",
-                action: "Viewed Stories",
-                isMatch: () => {
-                    return  /\/s\/stories/.test(window.location.href);
-                }
-            },
-            {
-                name: "Community Blog Post",
-                action: "Viewed Blog Post",
-                isMatch: () => {
-                    return new Promise((resolve, reject) => {
-                        if(!/\/nto\/s\/ntoblog/.test(window.location.href)){
-                            resolve(false);
-                        }    
-                        else {
-                            Evergage.DisplayUtils.pageElementLoaded('div.js-content-image.slds-col.slds-m-bottom_medium').then(() => {
-                                resolve(true);
-                            });
-                        }
-                    });
-                    //Old version: return /\/nto\/s\/ntoblog/.test(window.location.href);
-                },
-                catalog: {
-                    Blog: {
-                        _id: () => {
-                            var pParts = location.pathname.split("/");
-                            //console.log(pParts);
-                            var lastPart = "";
-                            var pageParts = "";
-                            var urlID = "";
-                            if (pParts.length > 0) {
-                                lastPart = pParts[pParts.length-1];
-                                //console.log(lastPart);
-                                pageParts = lastPart.split("-");
-                                if (pageParts.length > 0) {
-                                    urlID = pageParts[pageParts.length-1];
-                                }
-                            }
-                            return urlID;
-                        },
-                        name: Evergage.resolvers.fromSelector("#NTO-page > div.body > div > div > div:nth-child(2) > div > div.cb-section_row.slds-grid.slds-wrap.slds-large-nowrap > div > div > div:nth-child(2) > div > div > div > div > div.js-header.slds-col.slds-text-align_left > div > h2 > span"),
-                        url: Evergage.resolvers.fromHref(),
-                        imageUrl: () => { return Evergage.cashDom("#NTO-page > div.body > div > div > div:nth-child(1) > div > div.cb-section_row.slds-grid.slds-wrap.slds-large-nowrap > div > div > div > div > div > div > div.js-content-image.slds-col.slds-m-bottom_medium").css('background-image').slice(4, -1).replace(/"/g, "") || ""},
-                        description: Evergage.resolvers.fromSelector("#NTO-page > div.body > div > div > div:nth-child(2) > div > div.cb-section_row.slds-grid.slds-wrap.slds-large-nowrap > div > div > div:nth-child(2) > div > div > div > div > lightning-formatted-rich-text > span > p:nth-child(1)"),
-                    },/*
-                    Category: {
-                        _id: Evergage.resolvers.buildCategoryId("#NTO-page > div.body > div > div > div:nth-child(2) > div > div.cb-section_row.slds-grid.slds-wrap.slds-large-nowrap > div > div > div:nth-child(1) > div > div > div > div > div > ul > li", null, null, (val) => {
-                            if (typeof val === "string") {
-                                console.log(val);
-                                return [val.toUpperCase()];
-                            }  
-                        }),
-                    }*/
-                },
-                onActionEvent: (event) => {
-                    return event;
-                },
-            },
-            {
                 name: "Login",
                 action: "Login",
                 isMatch: () => {
@@ -426,47 +345,6 @@ var allowedDomains = [
                     {name: "Featured Categories", selector: ".experience-component.experience-layouts-3_column"},
                     {name: "Search Bar", selector: "nav form[role='search']"},
                     {name: "Homepage | Redirect"}
-                ]
-            },
-
-            {
-                name: "Community Question",
-                action: "Community Question",
-                isMatch: () => {
-                    return window.location.hostname === "community.northerntrailoutfitters.com" 
-                    && /\/s\/question\//.test(window.location.pathname) 
-                    && !/\/login/.test(window.location.href);
-                },
-                onActionEvent: (event) => {
-                    return event;
-                },
-                contentZones: [
-                    { name: "Community Rec", selector: "#NTO-page > div.body > div > div.slds-grid.slds-wrap.slds-medium-nowrap.slds-large-nowrap > div.slds-col--padded.slds-size--12-of-12.slds-medium-size--4-of-12.slds-large-size--4-of-12.comm-layout-column > div > div:nth-child(4) > div"},
-                ],
-                listeners: [
-                    
-                ]
-            },
-            {
-                name: "Community Homepage",
-                action: "Community Homepage",
-                isMatch: () => {
-                    return window.location.hostname === "community.northerntrailoutfitters.com" 
-                        && /\/s/.test(window.location.pathname) 
-                        && !/\/s\/question\//.test(window.location.pathname) 
-                        && !/\/login/.test(window.location.href);
-                },
-                onActionEvent: (event) => {
-                return event;
-                },
-                listeners: [
-                    Evergage.listener("click", "div.topicContent", () => {
-                        var topicLabel = Evergage.cashDom(event.currentTarget).find(".topicLabel").text().trim();
-                        console.log("topic label is =" + topicLabel);
-                        if (typeof topicLabel === "string") {
-                            Evergage.sendEvent({ action: "Community Homepage - " + topicLabel + "" });
-                        }
-                    }),
                 ]
             },
             {
@@ -524,17 +402,166 @@ var allowedDomains = [
 
                 ]  
             },
-            {
-                name: "Discover - Stories",
-                action: "Discover - Stories",
-                isMatch: () => /\/default\/stories/.test(window.location.href)
-            }
         ],
         pageTypeDefault: {
             name: "Default"
         }
     };
     
+
+
+var ecConfig = {
+    	global: {
+    		/**
+    		 * The following Global Action Event listener adds User Data
+    		 * captured by Data Collection LWC to every event sent to 
+    		 * Interaction Studio 
+    		 */
+    		onActionEvent: (event) => {
+    			var userData = interactionStudioExperienceCloudHelpers.userData;
+    			if(userData){
+    				event.user = event.user || {};
+    				event.user.attributes = event.user.attributes || {};
+    				event.user.attributes.userName = ((userData?.fields?.FirstName?.value || '') + ' ' + (userData?.fields?.LastName?.value || '')).trim();
+    				event.user.attributes.experienceCloudUserId = userData?.id;
+    				event.user.attributes.emailAddress = userData?.fields?.Email?.value;
+    				event.user.attributes.companyName = userData?.fields?.CompanyName?.value;
+    			}
+    
+    			return event;
+    		}
+    	},
+    	pageTypes: [
+            
+            {
+                name: "Community Login",
+                action: "Community Login",
+                isMatch: () => /\/s\/login/.test(window.location.href),
+                listeners: [
+                    Evergage.listener("click", ".loginButton", () => {
+                        var email = Evergage.cashDom("#sfdc_username_container > div > input").val();
+                        console.log(email + "is the evergage email");
+                        if (email) {
+                            Evergage.sendEvent({
+                                action: "Community Log In", 
+                                user: {
+                                    id: email, 
+                                    attributes: {emailAddress: email}
+                                },
+                                flags: {
+                                    noCampaigns: true
+                                }
+                            });
+                        }
+                    }),
+                ]
+            },
+            {
+                name: "Community Stories",
+                action: "Viewed Stories",
+                isMatch: () => {
+                    return  /\/s\/stories/.test(window.location.href);
+                }
+            },
+            {
+                name: "Community Blog Post",
+                action: "Viewed Blog Post",
+                isMatch: () => {
+                    return new Promise((resolve, reject) => {
+                        if(!/\/s\/ntoblog/.test(window.location.href)){
+                            resolve(false);
+                        }    
+                        else {
+                            Evergage.DisplayUtils.pageElementLoaded('div.js-content-image.slds-col.slds-m-bottom_medium').then(() => {
+                                resolve(true);
+                            });
+                        }
+                    });
+                    //Old version: return /\/nto\/s\/ntoblog/.test(window.location.href);
+                },
+                catalog: {
+                    Blog: {
+                        _id: () => {
+                            var pParts = location.pathname.split("/");
+                            //console.log(pParts);
+                            var lastPart = "";
+                            var pageParts = "";
+                            var urlID = "";
+                            if (pParts.length > 0) {
+                                lastPart = pParts[pParts.length-1];
+                                //console.log(lastPart);
+                                pageParts = lastPart.split("-");
+                                if (pageParts.length > 0) {
+                                    urlID = pageParts[pageParts.length-1];
+                                }
+                            }
+                            return urlID;
+                        },
+                        name: () => document.title.replace(/&nbsp;/g, " ").replace(/\uFFFD/g, ""),
+                        url: Evergage.resolvers.fromHref(),
+                        imageUrl: () => { 
+                             //return (Evergage.cashDom("#NTO-page > div.body > div > div > div:nth-child(1) > div > div.cb-section_row.slds-grid.slds-wrap.slds-large-nowrap > div > div > div > div > div > div > div.js-content-image.slds-col.slds-m-bottom_medium").css('background-image').slice(4, -1).replace(/"/g, "") ? Evergage.cashDom("#NTO-page > div.body > div > div > div:nth-child(1) > div > div.cb-section_row.slds-grid.slds-wrap.slds-large-nowrap > div > div > div > div > div > div > div.js-content-image.slds-col.slds-m-bottom_medium").css('background-image').slice(4, -1).replace(/"/g, "") : "");
+                             return (Evergage.cashDom("#NTO-page > div.body > div > div > div:nth-child(1) > div > div.cb-section_row.slds-grid.slds-wrap.slds-large-nowrap > div > div > div > div > div > div > div.js-content-image.slds-col.slds-m-bottom_medium").css('background-image').match(/url\(["']?([^"']*)["']?\)/)[1] ? Evergage.cashDom("#NTO-page > div.body > div > div > div:nth-child(1) > div > div.cb-section_row.slds-grid.slds-wrap.slds-large-nowrap > div > div > div > div > div > div > div.js-content-image.slds-col.slds-m-bottom_medium").css('background-image').match(/url\(["']?([^"']*)["']?\)/)[1] : "");
+                        },
+                        description: Evergage.resolvers.fromSelector("#NTO-page > div.body > div > div > div:nth-child(2) > div > div.cb-section_row.slds-grid.slds-wrap.slds-large-nowrap > div > div > div:nth-child(2) > div > div > div > div > lightning-formatted-rich-text > span > p:nth-child(1)"),
+                    },
+                    Category: {
+                        _id: Evergage.resolvers.buildCategoryId("#NTO-page > div.body > div > div > div:nth-child(2) > div > div.cb-section_row.slds-grid.slds-wrap.slds-large-nowrap > div > div > div:nth-child(1) > div > div > div > div > div > ul > li", null, null, (val) => {
+                            if (typeof val === "string") {
+                                console.log(val);
+                                return [val.toUpperCase()];
+                            }  
+                        }),
+                    }
+                },
+                onActionEvent: (event) => {
+                    return event;
+                },
+            },
+    		{
+    			name: "Question Detail",
+    			action: "Question Detail View",
+    			isMatch: () => /\/s\/question\//.test(window.location.pathname),
+    			contentZones: [
+    				{
+    					name: "featured_product",
+    					selector: "#featured-product"
+    				}
+    			]
+    		},
+            {
+                name: "Community Homepage",
+                action: "Community Homepage",
+                isMatch: () => {
+                    return /\/s/.test(window.location.pathname) 
+                        && !/\/s\/question\//.test(window.location.pathname) 
+                        && !/\/s\/ntoblog\//.test(window.location.pathname) 
+                        && !/\/login/.test(window.location.href);
+                },
+                onActionEvent: (event) => {
+                return event;
+                },
+                listeners: [
+                    Evergage.listener("click", "div.topicContent", () => {
+                        var topicLabel = Evergage.cashDom(event.currentTarget).find(".topicLabel").text().trim();
+                        console.log("topic label is =" + topicLabel);
+                        if (typeof topicLabel === "string") {
+                            Evergage.sendEvent({ action: "Community Homepage - " + topicLabel + "" });
+                        }
+                    }),
+                ]
+            },
+    	]
+    };
+
+
+
+
+
+
+
+
+
     const getProductsFromDataLayer = () => {
         if (window.dataLayer) {
             for (var i = 0; i < window.dataLayer.length; i++) {
@@ -547,5 +574,31 @@ var allowedDomains = [
 
 
 
-    Evergage.initSitemap(config);
+    if(window.location.host.includes('community')){
+        let currentUrl = window.location.href;
+        let isSitemapInitialized = false;
+        
+        document.addEventListener('lwc_onuserdataready', (e) => {
+            console.log('lwc_onuserdataready Event received');
+            if(isSitemapInitialized) return;
+            
+            isSitemapInitialized = true;
+            
+            interactionStudioExperienceCloudHelpers.catchBuilderContext();
+    
+            interactionStudioExperienceCloudHelpers.userData = e && e.detail && e.detail.userData;
+    
+            Evergage.initSitemap(ecConfig);
+    
+            setInterval(() => {
+                if(currentUrl !== window.location.href){
+                    currentUrl = window.location.href;
+                    Evergage.reinit();
+                }
+            }, 1000); 
+        });
+    }
+    else{
+        Evergage.initSitemap(config);
+    }
 });
