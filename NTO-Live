@@ -13,7 +13,8 @@ var allowedDomains = [
         global: {
             contentZones: [
                 {name: "Infobar - Top of Page", selector: "header.site-header"},
-                {name: "Infobar - Bottom of Page", selector: "footer.site-footer"}
+                {name: "Infobar - Bottom of Page", selector: "footer.site-footer"},
+                {name: "Footer - Marketing Signup", selector: "div.site-footer__header.mb-1"}
             ],
             onActionEvent: (event) => {
                 //HoloApp integration
@@ -141,8 +142,9 @@ var allowedDomains = [
                 listeners: [
                     Evergage.listener("click", ".add-to-cart", () => {
                         const lineItem = Evergage.util.buildLineItemFromPageState("select[id*=quantity]");
-                        lineItem.sku = { _id: Evergage.cashDom(".product-detail[data-pid]").attr("data-pid") };
+                        //lineItem.sku = { _id: Evergage.cashDom(".product-detail[data-pid]").attr("data-pid") };
                         Evergage.sendEvent({
+                            action: "Add to Cart",
                             itemAction: Evergage.ItemAction.AddToCart,
                             cart: {
                                 singleLine: {
@@ -155,6 +157,7 @@ var allowedDomains = [
                         let classList = event.target.classList.value.split(" ");
                         if (classList.includes("color-value") || classList.includes("size-value")) {
                             Evergage.sendEvent({
+                                action: "View Item Detail",
                                 itemAction: Evergage.ItemAction.ViewItemDetail,
                                 catalog: {
                                     Product: {
@@ -423,16 +426,15 @@ var ecConfig = {
     				event.user = event.user || {};
     				event.user.attributes = event.user.attributes || {};
     				event.user.attributes.userName = ((userData?.fields?.FirstName?.value || '') + ' ' + (userData?.fields?.LastName?.value || '')).trim();
-    				event.user.attributes.experienceCloudUserId = userData?.id;
+    				//event.user.attributes.experienceCloudUserId = userData?.id;
     				event.user.attributes.emailAddress = userData?.fields?.Email?.value;
-    				event.user.attributes.companyName = userData?.fields?.CompanyName?.value;
+    				//event.user.attributes.companyName = userData?.fields?.CompanyName?.value;
     			}
     
     			return event;
     		}
     	},
     	pageTypes: [
-            
             {
                 name: "Community Login",
                 action: "Community Login",
@@ -525,7 +527,7 @@ var ecConfig = {
     			contentZones: [
     				{
     					name: "featured_product",
-    					selector: "#featured-product"
+    					selector: "#featured_product"
     				}
     			]
     		},
@@ -571,8 +573,6 @@ var ecConfig = {
             }
         }
     };
-
-
 
     if(window.location.host.includes('community')){
         let currentUrl = window.location.href;
