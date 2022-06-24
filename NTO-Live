@@ -1,3 +1,46 @@
+// definition of Evergage.ComparisonShopping
+Evergage.ComparisonShopping = (() => {
+    let productNameCopied = false;
+
+    const bindComparisonShoppingCopy = (event) => {
+        Evergage.cashDom(event.currentTarget).on("copy.evgComparisonShopping", () => {
+            try {
+                productNameCopied = true;
+            } catch (e) {
+                Evergage.sendException(e, "bindComparisonShopping: copy event");
+            }
+        });
+    }
+
+    const bindComparisonShoppingBlur = () => {
+        try {
+            Evergage.cashDom(window).on("blur.evgComparisonShopping", () => {
+                if (productNameCopied) {
+                    Evergage.sendEvent({
+                        action: "Comparison Shopping",
+                        source: {
+                            contentZones: Evergage.getCurrentPage().source.contentZones
+                        }
+                    });
+                    productNameCopied = false;
+                }
+            });
+        } catch (e) {
+            Evergage.sendException(e, "handleComparisonShopping");
+        }
+    }
+
+    return {
+        handleComparisonShopping: (event) => {
+            Evergage.cashDom(window).off('.evgComparisonShopping')
+            bindComparisonShoppingCopy(event);
+            bindComparisonShoppingBlur();
+        }
+    };
+})();
+
+
+
 var allowedDomains = [
 	"community.northerntrailoutfitters.com",
 	"www.northerntrailoutfitters.com",
@@ -57,6 +100,13 @@ var allowedDomains = [
                             event.user.attributes = {kuID: window.localStorage.kxdmpsaprod_kuid};
                         }
                     }*/
+                    
+                    //Get DMP details from local storage
+                    if (window.localStorage.kxdmpsaprod_kuid) {
+                        if (window.localStorage.kxdmpsaprod_allsegs) {
+                            event.user.attributes = {DMPPersona: window.localStorage.kxdmpsaprod_allsegs};
+                        } 
+                    }
                 }
                 return event;
             },
@@ -137,7 +187,8 @@ var allowedDomains = [
                 },
                 contentZones: [
                     { name: "PDP Recs Container", selector: "div.row.recommendations > div"},
-                    { name: "PDP Social", selector: ".product-availability"}
+                    { name: "PDP Social", selector: ".product-availability"},
+                    { name: "Comparison Shopping", selector: ""}
                 ],
                 listeners: [
                     Evergage.listener("click", ".add-to-cart", () => {
@@ -153,6 +204,9 @@ var allowedDomains = [
                             }
                         });
                     }),
+                    
+                    Evergage.listener("mouseup.initComparisonShopping touchend.initComparisonShopping", "h1.product-name.d-none.d-md-block", Evergage.ComparisonShopping.handleComparisonShopping),
+
                     Evergage.listener("click", ".attribute", (event) => {
                         let classList = event.target.classList.value.split(" ");
                         if (classList.includes("color-value") || classList.includes("size-value")) {
