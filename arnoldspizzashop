@@ -1,0 +1,359 @@
+SalesforceInteractions.init({
+  cookieDomain: "arnoldspizzashop.ca",
+  consents: [
+    {
+      purpose: SalesforceInteractions.mcis.ConsentPurpose.Personalization,
+      provider: "Example Consent Manager",
+      status: SalesforceInteractions.ConsentStatus.OptIn,
+    },
+  ],
+}).then(() => {
+  const sitemapConfig = {
+    global: {
+      onActionEvent: (actionEvent) => {
+        const email = SalesforceInteractions.mcis.getValueFromNestedObject(
+          "window._etmc.user_info.email",
+        );
+        if (email) {
+          actionEvent.user = actionEvent.user || {};
+          actionEvent.user.identities = actionEvent.user.identities || {};
+          actionEvent.user.identities.emailAddress = email;
+        }
+        return actionEvent;
+      },
+      contentZones: [
+        { name: "Popup", selector: "" },
+        { name: "Slidein", selector: "" },
+      ],
+      listeners: [
+        SalesforceInteractions.listener("submit", "form[id^='comp-'", () => {
+          const email = SalesforceInteractions.cashDom("input[id^='input_comp-'").val();
+          if (email) {
+            SalesforceInteractions.sendEvent({
+              interaction: { name: "Email Sign Up - Footer" },
+              user: { identities: { emailAddress: email } },
+            });
+          }
+        }),
+      ],
+    },
+    pageTypeDefault: {
+      name: "default",
+      interaction: {
+        name: "Default Page",
+      },
+    },
+    pageTypes: [
+      {
+        name: "Order Online",
+        /*
+                The best practice for isMatch is to match as quickly as possible. If matching immediately is not an option, you can use a Promise.
+                The Promise should resolve true or false and not pend indefinitely. This Promise example uses a setTimeout to prevent the isMatch from pending indefinitely if the match condition is not met fast enough. In this scenario, we know that the match condition will be met within 50 milliseconds or not at all. Note that using a timeout like this might not be sufficient in all cases and if you are using a Promise it should be tailored to your specific use-case.
+                */
+        isMatch: () => /\/order-online/.test(window.location.href),
+        interaction: {
+            name: SalesforceInteractions.CatalogObjectInteractionName.ViewCatalogObject,
+            catalogObject: {
+            type: "Category",
+            id: "ORDER ONLINE"
+            },
+        },
+          //name: SalesforceInteractions.CatalogObjectInteractionName.ViewCatalogObject,
+          /**
+          catalogObject: {
+            type: "Product",
+            id: () => {
+              return SalesforceInteractions.util.resolveWhenTrue.bind(() => {
+                const productId = SalesforceInteractions.cashDom(".product-id").first().text();
+                const products = getProductsFromDataLayer();
+                if (products && products.length > 0) {
+                  return products[0].id;
+                } else if (productId) {
+                  return productId;
+                } else {
+                  return false;
+                }
+              });
+            },
+            attributes: {
+              sku: {
+                id: SalesforceInteractions.cashDom(".product-detail[data-pid]").attr("data-pid"),
+              },
+              name: SalesforceInteractions.resolvers.fromJsonLd("name"),
+              description: SalesforceInteractions.resolvers.fromSelector(
+                ".short-description",
+                (desc) => desc.trim(),
+              ),
+              url: SalesforceInteractions.resolvers.fromHref(),
+              imageUrl: SalesforceInteractions.resolvers.fromSelectorAttribute(
+                ".product-carousel .carousel-item[data-slick-index='0'] img",
+                "src",
+                (url) => window.location.origin + url,
+              ),
+              inventoryCount: 1,
+              price: SalesforceInteractions.resolvers.fromSelector(
+                ".prices .price .value",
+                (price) => parseFloat(price.replace(/[^0-9\.]+/g, "")),
+              ),
+              rating: () => {
+                return SalesforceInteractions.mcis.extractFirstGroup(
+                  /([.\w]+) out of/,
+                  SalesforceInteractions.cashDom(".ratings .sr-only").text(),
+                );
+              },
+            },
+            relatedCatalogObjects: {
+              Category: SalesforceInteractions.DisplayUtils.pageElementLoaded(
+                ".container .product-breadcrumb .breadcrumb a",
+                "html",
+              ).then((ele) => {
+                return SalesforceInteractions.resolvers.buildCategoryId(
+                  ".container .product-breadcrumb .breadcrumb a",
+                  null,
+                  null,
+                  (categoryId) => [categoryId.toUpperCase()],
+                );
+              }),
+              Gender: SalesforceInteractions.DisplayUtils.pageElementLoaded(
+                ".product-breadcrumb .breadcrumb a, h1.product-name",
+                "html",
+              ).then((ele) => {
+                if (
+                  SalesforceInteractions.cashDom(".product-breadcrumb .breadcrumb a")
+                    .first()
+                    .text()
+                    .toLowerCase() === "women" ||
+                  SalesforceInteractions.cashDom("h1.product-name").text().indexOf("Women") >= 0
+                ) {
+                  return ["WOMEN"];
+                } else if (
+                  SalesforceInteractions.cashDom(".product-breadcrumb .breadcrumb a")
+                    .first()
+                    .text()
+                    .toLowerCase() === "men" ||
+                  SalesforceInteractions.cashDom("h1.product-name").text().indexOf("Men") >= 0
+                ) {
+                  return ["MEN"];
+                } else {
+                  return;
+                }
+              }),
+              Color: SalesforceInteractions.DisplayUtils.pageElementLoaded(
+                ".attributes",
+                "html",
+              ).then((ele) => {
+                return SalesforceInteractions.resolvers.fromSelectorAttributeMultiple(
+                  ".color-value",
+                  "data-attr-value",
+                );
+              }),
+              Feature: SalesforceInteractions.DisplayUtils.pageElementLoaded(
+                ".features",
+                "html",
+              ).then((ele) => {
+                return SalesforceInteractions.resolvers.fromSelectorMultiple(
+                  ".long-description li",
+                  (features) => {
+                    return features.map((feature) => {
+                      return feature.trim().toUpperCase();
+                    });
+                  },
+                );
+              }),
+            },
+          },
+        },
+         */
+        contentZones: [
+         
+        ],
+        listeners: [
+          //view item
+          SalesforceInteractions.listener("click", "div[data-hook^='restaurants.menu.item-view-']", (e) => {
+            
+            const pid = SalesforceInteractions.cashDom(e.currentTarget).attr("data-hook").split("-").slice(-1);
+            if (!pid) {
+              return;
+            }
+            
+            SalesforceInteractions.sendEvent({
+              interaction: {
+                name: SalesforceInteractions.CatalogObjectInteractionName.QuickViewCatalogObject,
+                catalogObject: {
+                  type: "Product",
+                  id: pid,
+                },
+              },
+            });
+          }),
+          //add to cart
+          SalesforceInteractions.listener("click", "#lock-modal > div > div > button", (e) => {  
+           
+            const pid = window.location.href.split("/").splice(-1);
+            if (!pid) {
+              return;
+            }
+            
+            let lineItem =  {
+                    _id: pid,
+                    quantity: SalesforceInteractions.cashDom("input[aria-label='Quantity']").attr("value"),
+                    price: SalesforceInteractions.cashDom("#lock-modal > div.neHcei > div > button > span > span").split("$").slice(-1),
+                };
+            SalesforceInteractions.sendEvent({
+              interaction: {
+                name: SalesforceInteractions.CartInteractionName.AddToCart,
+                lineItem: lineItem,
+              },
+            });
+          }),
+          //close modal
+          SalesforceInteractions.listener("click", "body", (e) => {
+            if (
+              SalesforceInteractions.cashDom(e.target).closest("button[data-dismiss='modal']")
+                .length > 0
+            ) {
+              SalesforceInteractions.sendEvent({
+                interaction: {
+                  name: SalesforceInteractions.mcis.CatalogObjectInteractionName
+                    .StopQuickViewCatalogObject,
+                },
+              });
+            } else if (
+              SalesforceInteractions.cashDom(e.target).closest("#quickViewModal").length > 0 &&
+              SalesforceInteractions.cashDom(e.target).find("#quickViewModal .modal-dialog")
+                .length > 0
+            ) {
+              SalesforceInteractions.sendEvent({
+                interaction: {
+                  name: SalesforceInteractions.mcis.CatalogObjectInteractionName
+                    .StopQuickViewCatalogObject,
+                },
+              });
+            }
+          }),
+        ],
+      },
+      
+    /**
+      {
+        name: "cart",
+        isMatch: () => /\/cart/.test(window.location.href),
+        interaction: {
+          name: SalesforceInteractions.CartInteractionName.ReplaceCart,
+          lineItems: SalesforceInteractions.DisplayUtils.pageElementLoaded(
+            ".cart-empty, .checkout-btn",
+            "html",
+          ).then(() => {
+            let cartLineItems = [];
+            SalesforceInteractions.cashDom(".product-info .product-details").each((index, ele) => {
+              let itemQuantity = parseInt(
+                SalesforceInteractions.cashDom(ele).find(".qty-card-quantity-count").text().trim(),
+              );
+              if (itemQuantity && itemQuantity > 0) {
+                let lineItem = {
+                  catalogObjectType: "Product",
+                  catalogObjectId: SalesforceInteractions.cashDom(ele)
+                    .find(".line-item-quantity-info")
+                    .attr("data-pid")
+                    .trim(),
+                  price:
+                    SalesforceInteractions.cashDom(ele)
+                      .find(".pricing")
+                      .text()
+                      .trim()
+                      .replace(/[^0-9\.]+/g, "") / itemQuantity,
+                  quantity: itemQuantity,
+                };
+                cartLineItems.push(lineItem);
+              }
+            });
+            return cartLineItems;
+          }),
+        },
+      },
+      {
+        name: "Order Confirmation",
+        isMatch: () => /\/confirmation/.test(window.location.href),
+        interaction: {
+          name: SalesforceInteractions.OrderInteractionName.Purchase,
+          order: {
+            id: SalesforceInteractions.DisplayUtils.pageElementLoaded(".order-number", "html").then(
+              (ele) => {
+                return SalesforceInteractions.resolvers.fromSelector(".order-number");
+              },
+            ),
+            lineItems: SalesforceInteractions.DisplayUtils.pageElementLoaded(
+              ".product-line-item",
+              "html",
+            ).then(() => {
+              let purchaseLineItems = [];
+              SalesforceInteractions.cashDom(".product-line-item").each((index, ele) => {
+                let itemQuantity = parseInt(
+                  SalesforceInteractions.cashDom(ele)
+                    .find(".qty-card-quantity-count")
+                    .text()
+                    .trim(),
+                );
+                if (itemQuantity && itemQuantity > 0) {
+                  let lineItem = {
+                    catalogObjectType: "Product",
+                    catalogObjectId: SalesforceInteractions.cashDom(ele)
+                      .find(".line-item-quantity-info")
+                      .attr("data-pid")
+                      .trim(),
+                    price:
+                      SalesforceInteractions.cashDom(ele)
+                        .find(".pricing")
+                        .text()
+                        .trim()
+                        .replace(/[^0-9\.]+/g, "") / itemQuantity,
+                    quantity: itemQuantity,
+                  };
+                  purchaseLineItems.push(lineItem);
+                }
+              });
+              return purchaseLineItems;
+            }),
+          },
+        },
+      }, */
+      {
+        name: "Login",
+        isMatch: () =>
+          /\/members/.test(window.location.href),
+        interaction: {
+          name: "Login",
+        },
+        listeners: [
+          SalesforceInteractions.listener("click", "form[name='login-form'] button", () => {
+            const email = SalesforceInteractions.cashDom("#login-form-email").val();
+            if (email) {
+              SalesforceInteractions.sendEvent({
+                interaction: { name: "Logged In" },
+                user: { identities: { emailAddress: email } },
+              });
+            }
+          }),
+        ],
+      },
+      {
+        name: "Home",
+        isMatch: () => window.location.hostname === "www.arnoldspizzashop.ca" && window.location.pathname === "/",
+        interaction: {
+          name: "Homepage",
+        },
+        contentZones: [
+          { name: "home_hero", selector: "#comp-liyz4jdq > h1" },
+          {
+            name: "home_sub_hero",
+            selector: "div.cycle-carousel-wrap",
+          },
+        ],
+      },
+      
+      
+    ],
+  };
+  
+  SalesforceInteractions.initSitemap(sitemapConfig);
+});
